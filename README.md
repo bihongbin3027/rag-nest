@@ -24,11 +24,6 @@
 
 核心模块包括： 用户、角色、菜单、岗位、部门、日志、文件管理等功能。提供了丰富的功能组件，它可以帮助您快速搭建企业级中后台产品原型。
 
-* [github](https://github.com/wenqiyun/nest-admin)
-* [gitee](https://gitee.com/wenqiyun/nest-admin)
-* [文档](https://wenqiyun.github.io/nest-admin)
-* [国内文档](https://wenqiyun.gitee.io/nest-admin)
-
 #### 本地开发
 
 前端
