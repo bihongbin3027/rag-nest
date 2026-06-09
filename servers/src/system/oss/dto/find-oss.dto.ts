@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsDateString, IsOptional } from 'class-validator';
+import { IsDateString, IsOptional } from 'class-validator'
 
 import { ReqListQuery } from '../../../common/utils/req-list-query'
 

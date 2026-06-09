@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { InjectEntityManager, InjectRepository } from "@nestjs/typeorm";
-import { EntityManager, Repository } from 'typeorm';
-import { DeptEntity } from "./dept.entity";
-import { CreateDeptDto } from './dto/create-dept.dto';
-import { ResultData } from '../../common/utils/result';
-import { plainToInstance } from "class-transformer";
-import { AppHttpCode } from '../../common/enums/code.enum';
-import { UpdateDeptDto } from './dto/update-dept.dto';
+import { Injectable } from '@nestjs/common'
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm'
+import { EntityManager, Repository } from 'typeorm'
+import { DeptEntity } from './dept.entity'
+import { CreateDeptDto } from './dto/create-dept.dto'
+import { ResultData } from '../../common/utils/result'
+import { plainToInstance } from 'class-transformer'
+import { AppHttpCode } from '../../common/enums/code.enum'
+import { UpdateDeptDto } from './dto/update-dept.dto'
 
 @Injectable()
 export class DeptService {
@@ -14,12 +14,11 @@ export class DeptService {
     @InjectRepository(DeptEntity)
     private readonly deptRepo: Repository<DeptEntity>,
     @InjectEntityManager()
-    private readonly deptManager: EntityManager
+    private readonly deptManager: EntityManager,
   ) {}
 
-
   /** 创建部门 */
-  async create (dto: CreateDeptDto): Promise<ResultData> {
+  async create(dto: CreateDeptDto): Promise<ResultData> {
     // 查询父部门是否存在
     if (dto.parentId !== '0') {
       const existing = await this.deptRepo.findOne({ where: { parentId: dto.parentId } })
@@ -34,7 +33,7 @@ export class DeptService {
   }
 
   /** 更新部门 */
-  async update (dto: UpdateDeptDto): Promise<ResultData> {
+  async update(dto: UpdateDeptDto): Promise<ResultData> {
     const existing = await this.deptRepo.findOne({ where: { id: dto.id } })
     if (!existing) return ResultData.fail(AppHttpCode.DEPT_NOT_FOUND, '部门不存在或已被删除，请修改后重新添加')
     const { affected } = await this.deptManager.transaction(async (transactionalEntityManager) => {
@@ -45,7 +44,7 @@ export class DeptService {
   }
 
   /** 删除部门 */
-  async delete (id: string): Promise<ResultData> {
+  async delete(id: string): Promise<ResultData> {
     const existing = await this.deptRepo.findOne({ where: { id } })
     if (!existing) return ResultData.fail(AppHttpCode.DEPT_NOT_FOUND, '部门不存在或已被删除')
     const { affected } = await this.deptManager.transaction(async (transactionalEntityManager) => {
@@ -57,9 +56,8 @@ export class DeptService {
   }
 
   /** 查询所有部门 */
-  async find (): Promise<ResultData> {
+  async find(): Promise<ResultData> {
     const depts = await this.deptRepo.find()
     return ResultData.ok(depts)
   }
-
 }

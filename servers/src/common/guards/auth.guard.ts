@@ -11,7 +11,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(
     private readonly reflector: Reflector,
     @Inject(UserService)
-    private readonly userService: UserService
+    private readonly userService: UserService,
   ) {
     super()
   }

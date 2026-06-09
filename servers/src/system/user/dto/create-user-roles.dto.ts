@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsNumberString } from 'class-validator';
+import { IsNotEmpty, IsNumberString } from 'class-validator'
 
 export class CreateOrUpdateUserRolesDto {
   @ApiProperty({ description: '用户id' })

@@ -1,11 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsEmail, IsMobilePhone, IsNotEmpty, IsNumber, IsOptional, IsPhoneNumber, IsString, IsIn, IsNumberString } from 'class-validator'
+import {
+  IsEmail,
+  IsMobilePhone,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  IsIn,
+  IsNumberString,
+} from 'class-validator'
 import { $enum } from 'ts-enum-util'
-
 
 import { StatusValue } from '../../../common/enums/common.enum'
 
-export class  UpdateUserDto {
+export class UpdateUserDto {
   @ApiProperty({ description: '用户编码' })
   @IsNumberString({}, { message: 'id 类型错误，正确类型 string' })
   @IsNotEmpty({ message: 'id 不能为空' })
@@ -36,7 +45,7 @@ export class  UpdateUserDto {
   readonly avatar?: string
 
   @ApiProperty({ description: '角色 id 集合', required: false })
-  @IsString( { each: true, message: '角色id集合中存在类型错误，正确类型 string[]' })
+  @IsString({ each: true, message: '角色id集合中存在类型错误，正确类型 string[]' })
   @IsOptional()
   readonly roleIds?: string[]
 }

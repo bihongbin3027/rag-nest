@@ -28,7 +28,6 @@ export class UpdatePostDto {
   @IsOptional()
   readonly status?: StatusValue
 
-  
   @ApiProperty({ description: '排序', required: false })
   @IsNumber({}, { message: 'orderNum 类型错误， 正确类型 number ' })
   @Min(0)

@@ -19,11 +19,11 @@ export class PostEntity {
   name: string
 
   @ApiProperty({ description: '状态', enum: $enum(StatusValue).getValues() })
-  @Column({ type:  'tinyint', default: StatusValue.NORMAL, comment: '岗位状态，1-有效，0-禁用' })
+  @Column({ type: 'tinyint', default: StatusValue.NORMAL, comment: '岗位状态，1-有效，0-禁用' })
   status: StatusValue
 
   @ApiProperty({ description: '备注' })
-  @Column({ type: 'text',default: null, comment: '备注' })
+  @Column({ type: 'text', default: null, comment: '备注' })
   remark: string
 
   @ApiProperty({ description: '排序' })

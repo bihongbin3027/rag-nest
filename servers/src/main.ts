@@ -94,7 +94,7 @@ async function bootstrap() {
       : path.join(process.cwd(), `${fileUploadLocationConfig}`),
   )
   Logger.log(
-    Chalk.green(`Nest-Admin 服务启动成功 `),
+    Chalk.green('Nest-Admin 服务启动成功 '),
     '\n',
     Chalk.green('上传文件存储路径'),
     `        ${fileUploadBastPath}`,

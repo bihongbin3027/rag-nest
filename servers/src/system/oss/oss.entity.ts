@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm"
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm'
 import { Exclude } from 'class-transformer'
 import { ApiProperty } from '@nestjs/swagger'
 
@@ -13,7 +13,7 @@ export class OssEntity {
   public userId: string
 
   @ApiProperty({ description: '上传用户帐号' })
-  @Column({ type: 'varchar',name: 'user_account', length: 32, comment: '上传用户帐号' })
+  @Column({ type: 'varchar', name: 'user_account', length: 32, comment: '上传用户帐号' })
   public userAccount: string
 
   @ApiProperty({ description: '文件 url' })

@@ -162,19 +162,19 @@ export class UserService {
       }
     }
     const accountErrArr = []
-    for (let [key, val] of accountMap) {
+    for (const [key, val] of accountMap) {
       if (val.length > 0) {
         accountErrArr.push({ key, val })
       }
     }
     const phoneErrArr = []
-    for (let [key, val] of phoneMap) {
+    for (const [key, val] of phoneMap) {
       if (val.length > 0) {
         phoneErrArr.push({ key, val })
       }
     }
     const emailErrArr = []
-    for (let [key, val] of emailMap) {
+    for (const [key, val] of emailMap) {
       if (val.length > 0) {
         emailErrArr.push({ key, val })
       }

@@ -6,7 +6,7 @@ import { RedisService } from './redis.service'
 @Global()
 @Module({
   providers: [RedisService],
-  exports: [RedisService]
+  exports: [RedisService],
 })
 export class RedisModule {
   static forRoot(options: RedisModuleAsyncOptions, isGlobal = true): DynamicModule {
@@ -14,7 +14,7 @@ export class RedisModule {
       module: RedisModule,
       imports: [liaoliaoRedisModule.forRootAsync(options, isGlobal)],
       providers: [RedisService],
-      exports: [RedisService]
+      exports: [RedisService],
     }
   }
 
@@ -23,7 +23,7 @@ export class RedisModule {
       module: RedisModule,
       imports: [liaoliaoRedisModule.forRootAsync(options, isGlobal)],
       providers: [RedisService],
-      exports: [RedisService]
+      exports: [RedisService],
     }
   }
 }

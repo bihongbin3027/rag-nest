@@ -7,6 +7,6 @@ import { PermController } from './perm.controller'
   imports: [HttpModule],
   providers: [PermService],
   controllers: [PermController],
-  exports: [PermService]
+  exports: [PermService],
 })
 export class PermModule {}
