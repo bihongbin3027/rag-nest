@@ -134,7 +134,7 @@ export class PermService {
     // const [cursor, elements] = await this.redisService.getClient().scan(0, 'MATCH', 'nest:user:[menu|role]*')
     const keys: string[] = []
     let _cursor = ''
-    while (_cursor != '0') {
+    while (_cursor !== '0') {
       const [cursor, elements] = await this.redisService
         .getClient()
         .scan(_cursor || '0', 'MATCH', match || 'nest:user:[menu|role|perm]*', 'COUNT', this.TRAVERSE_MAX_VALUE)
