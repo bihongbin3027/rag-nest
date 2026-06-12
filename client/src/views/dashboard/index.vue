@@ -64,7 +64,7 @@
                 <div class="suggest-card" @click="quickQuestion('总结一下这份核心文档的要点')">
                   <el-icon><DocumentCopy /></el-icon>
                   <h4>长文本深度语义召回</h4>
-                  <p>基于 Qdrant 高维向量空间，规避大模型幻觉</p>
+                  <p>基于高维向量空间，规避大模型幻觉</p>
                 </div>
               </div>
             </div>
@@ -155,14 +155,11 @@ const streamingActive = ref(false)
 const sourcesLoading = ref(false)
 const scrollbarRef = ref()
 
-// 初始化拉取知识语料（使用全局拦截的 Axios 请求）
 const fetchKnowledgeSources = async () => {
   sourcesLoading.value = true
   try {
     const res: any = await getKnowledgeFilesApi()
-    // 对齐项目统一的解包结构，提取真实的物理数据列表
     sourceFiles.value = res.data || [
-      // 保留大厂视觉静态 Mock 用作没有配置完物理网盘时的安全兜底
       { id: 101, fileName: '2026年企业第一季度财务报表.xlsx', size: '148200', rag_track: 'SQL' },
       { id: 102, fileName: '企业核心人力资源与薪酬管理红头文件.pdf', size: '2541000', rag_track: 'VECTOR' }
     ]
@@ -193,7 +190,6 @@ const handleEnterKey = (e: KeyboardEvent) => {
   }
 }
 
-// 使用 Axios 流式泵字处理层
 const submitQuery = async () => {
   const query = inputQuery.value.trim()
   if (!query || streamingActive.value) return
@@ -202,13 +198,11 @@ const submitQuery = async () => {
   inputQuery.value = ''
   streamingActive.value = true
 
-  // 创建一个占位气泡
   chatHistory.value.push({ role: 'assistant', content: '' })
   const aiMessageIndex = chatHistory.value.length - 1
   await scrollToBottom()
 
   try {
-    // 调用封装好的 Axios 请求方法
     await askQuestionStreamApi(
       {
         question: query,
@@ -216,14 +210,11 @@ const submitQuery = async () => {
         sources: selectedSources.value
       },
       async (chunkedText: string) => {
-        // 由于 Axios 的 onDownloadProgress 吐出的是当前缓冲区的全量文本，
-        // 我们可以直接覆写内容，以保证流式传输过程中打字机渲染的平滑与稳定
         chatHistory.value[aiMessageIndex].content = chunkedText
         await scrollToBottom()
       }
     )
   } catch (error: any) {
-    // 全局拦截器未阻断的未知连接异常降级
     if (!chatHistory.value[aiMessageIndex].content) {
       chatHistory.value[aiMessageIndex].content = `❌ 网络异常: 与局域网 RAG 服务器连接超时`
     }
@@ -268,124 +259,169 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ==========================================================================
+   📐 布局逻辑渲染层 (完美绑定外层全局注入的主题变量)
+   ========================================================================== */
 .dashboard-chat-container {
   display: flex;
   height: calc(100vh - 90px);
-  background-color: #f8fafc;
+  background-color: var(--rag-bg-container);
+  transition: background-color 0.3s ease;
 }
+
 .knowledge-sidebar {
   width: 300px;
-  background-color: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  background-color: var(--rag-bg-sidebar);
+  border-right: 1px solid var(--rag-border-color);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  transition: all 0.3s ease;
 }
+
 .sidebar-header {
   padding: 20px;
   display: flex;
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--rag-border-sub);
 }
+
 .brand-icon {
   font-size: 22px;
-  color: #4f46e5;
+  color: var(--rag-primary-brand);
 }
+
 .brand-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--rag-text-title);
 }
+
 .sidebar-hint {
   padding: 12px 20px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--rag-text-sub);
   line-height: 1.6;
-  background-color: #f8fafc;
+  background-color: var(--rag-bg-container);
+  transition: background-color 0.3s ease;
 }
+
 .source-list-wrapper {
   flex: 1;
   padding: 14px;
   overflow: hidden;
 }
+
 .source-item-card {
   padding: 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--rag-card-item);
+  border: 1px solid var(--rag-border-color);
   border-radius: 8px;
   margin-bottom: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
+
 .source-item-card:hover {
-  border-color: #cbd5e1;
-  background-color: #f8fafc;
+  border-color: var(--rag-primary-brand);
+  background-color: var(--rag-card-hover);
 }
+
 .source-item-card.is-active {
-  border-color: #818cf8;
-  background-color: #eef2ff;
+  border-color: var(--rag-card-active-border);
+  background-color: var(--rag-card-active);
 }
+
 .item-meta {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
+
+/* 穿透修改 Element Plus Checkbox 样式 */
+:deep(.el-checkbox__inner) {
+  background-color: var(--rag-card-item) !important;
+  border-color: var(--rag-border-color) !important;
+}
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: var(--rag-primary-brand) !important;
+  border-color: transparent !important;
+}
+
 .file-info {
   display: flex;
   flex-direction: column;
   gap: 6px;
   overflow: hidden;
 }
+
 .file-name {
   font-size: 13px;
   font-weight: 500;
-  color: #334155;
+  color: var(--rag-text-main);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .file-tags {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .file-size {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--rag-text-sub);
 }
+
 .sidebar-footer {
   padding: 16px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--rag-border-sub);
 }
+
 .action-btn {
   width: 100%;
   border-radius: 6px;
+  background: var(--rag-card-item) !important;
+  border-color: var(--rag-border-color) !important;
+  color: var(--rag-text-main) !important;
 }
+.action-btn:hover {
+  border-color: var(--rag-primary-brand) !important;
+  color: var(--rag-primary-brand) !important;
+}
+
 .chat-main-terminal {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: var(--rag-bg-terminal);
   position: relative;
+  transition: background-color 0.3s ease;
 }
+
 .chat-scroller-body {
   flex: 1;
   overflow: hidden;
 }
+
 .chat-inner-flow {
   max-width: 820px;
   margin: 0 auto;
   padding: 40px 20px 140px;
 }
+
 .welcome-hero {
   text-align: center;
   margin-top: 6vh;
 }
+
 .hero-logo {
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: var(--rag-primary-brand-glow);
   color: #ffffff;
   font-size: 24px;
   font-weight: 700;
@@ -393,22 +429,25 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3);
   margin-bottom: 24px;
 }
+
 .hero-title {
   font-size: 26px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--rag-text-title);
   margin-bottom: 12px;
 }
+
 .hero-subtitle {
   font-size: 14px;
-  color: #64748b;
+  color: var(--rag-text-sub);
   max-width: 540px;
   margin: 0 auto 40px;
   line-height: 1.6;
 }
+
 .suggest-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -416,40 +455,48 @@ onMounted(() => {
   max-width: 640px;
   margin: 0 auto;
 }
+
 .suggest-card {
   padding: 20px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--rag-card-item);
+  border: 1px solid var(--rag-border-color);
   border-radius: 12px;
   text-align: left;
   cursor: pointer;
   transition: all 0.2s;
 }
+
 .suggest-card:hover {
-  border-color: #4f46e5;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border-color: var(--rag-primary-brand);
+  box-shadow: var(--rag-dock-shadow);
+  transform: translateY(-1px);
 }
+
 .suggest-card .el-icon {
   font-size: 24px;
-  color: #4f46e5;
+  color: var(--rag-primary-brand);
   margin-bottom: 12px;
 }
+
 .suggest-card h4 {
   font-size: 14px;
-  color: #1e293b;
+  color: var(--rag-text-title);
   margin: 0 0 6px 0;
 }
+
 .suggest-card p {
   font-size: 12px;
-  color: #64748b;
+  color: var(--rag-text-sub);
   margin: 0;
   line-height: 1.5;
 }
+
 .message-row {
   display: flex;
   gap: 16px;
   margin-bottom: 32px;
 }
+
 .avatar-box {
   width: 36px;
   height: 36px;
@@ -459,110 +506,137 @@ onMounted(() => {
   justify-content: center;
   flex-shrink: 0;
 }
+
 .row-user .avatar-box {
-  background-color: #f1f5f9;
-  color: #475569;
+  background-color: var(--rag-user-avatar-bg);
+  color: var(--rag-user-avatar-text);
 }
+
 .row-assistant .avatar-box {
-  background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
-  color: #4f46e5;
+  background: var(--rag-ai-avatar-bg);
+  color: #ffffff;
 }
+
 .ai-avatar {
   font-size: 12px;
   font-weight: 700;
 }
+
 .message-bubble-wrapper {
   flex: 1;
   overflow: hidden;
 }
+
 .bubble-sender {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--rag-text-sub);
   margin-bottom: 6px;
 }
+
 .bubble-content {
   font-size: 15px;
-  color: #0f172a;
+  color: var(--rag-text-main);
   line-height: 1.7;
   word-break: break-word;
 }
+
 .bubble-content :deep(p) {
   margin: 0 0 10px 0;
 }
+
 .bubble-content :deep(p:last-child) {
   margin-bottom: 0;
 }
+
+/* 行内代码块高亮适配 */
 .bubble-content :deep(code) {
-  background-color: #f1f5f9;
+  background-color: var(--rag-bg-container);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: monospace;
   font-size: 13px;
   color: #dc2626;
+  transition: background-color 0.3s ease;
 }
+
 .input-dashboard-dock {
-  background: linear-gradient(to top, #ffffff 70%, rgba(255, 255, 255, 0) 0%);
+  background: var(--rag-bg-terminal);
   padding: 20px 40px;
+  transition: background-color 0.3s ease;
 }
+
 .input-container-neon {
   max-width: 820px;
   margin: 0 auto;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--rag-border-color);
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--rag-card-item);
   padding: 12px;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--rag-dock-shadow);
+  transition: all 0.25s ease;
 }
+
 .input-container-neon:focus-within {
-  border-color: #4f46e5;
+  border-color: var(--rag-primary-brand);
 }
-.input-container-neon :deep(.el-textarea__inner) {
+
+:deep(.el-textarea__inner) {
+  background-color: transparent !important;
+  color: var(--rag-text-main) !important;
   border: none !important;
   box-shadow: none !important;
   padding: 4px 8px;
   font-size: 14px;
 }
+
 .dock-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 8px;
 }
+
 .status-indicator {
   font-size: 12px;
-  color: #64748b;
+  color: var(--rag-text-sub);
   display: flex;
   align-items: center;
   gap: 6px;
 }
+
 .status-ready {
   color: #10b981;
 }
+
 .pulse-dot {
   width: 7px;
   height: 7px;
-  background-color: #4f46e5;
+  background-color: var(--rag-primary-brand);
   border-radius: 50%;
   animation: pulse 1.4s infinite ease-in-out;
 }
+
 .send-plasma-btn {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: #4f46e5;
+  background: var(--rag-primary-brand) !important;
   border: none;
 }
+
 .brand-copyright {
   text-align: center;
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--rag-text-sub);
   margin-top: 10px;
 }
+
 .cursor-pulse {
   animation: blink 0.8s infinite;
-  color: #4f46e5;
+  color: var(--rag-primary-brand);
 }
+
 @keyframes pulse {
   0%,
   100% {
@@ -574,6 +648,7 @@ onMounted(() => {
     opacity: 1;
   }
 }
+
 @keyframes blink {
   0%,
   100% {

@@ -31,6 +31,38 @@ html.normal {
   --login-primary-btn: linear-gradient(90deg, #6366f1 0%, #a855f7 100%);
   --login-glow-1: rgba(99, 102, 241, 0.2);
   --login-glow-2: rgba(236, 72, 153, 0.15);
+
+  // 基础背景与面板
+  --rag-bg-container: #f8fafc;
+  --rag-bg-sidebar: #ffffff;
+  --rag-bg-terminal: #ffffff;
+  
+  // 边框与穿透线
+  --rag-border-color: #e2e8f0;
+  --rag-border-sub: #f1f5f9;
+  
+  // 文本色彩梯度
+  --rag-text-title: #1e293b;
+  --rag-text-main: #0f172a;
+  --rag-text-sub: #64748b;
+  
+  // 知识库语料卡片状态
+  --rag-card-item: #ffffff;
+  --rag-card-hover: #f8fafc;
+  --rag-card-active: #eef2ff;
+  --rag-card-active-border: #818cf8;
+  
+  // 聊天气泡头像
+  --rag-user-avatar-bg: #f1f5f9;
+  --rag-user-avatar-text: #475569;
+  --rag-ai-avatar-bg: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+  
+  // 核心品牌与流光
+  --rag-primary-brand: #4f46e5;
+  --rag-primary-brand-glow: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  
+  // 外观控制台专属高级阴影
+  --rag-dock-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06);
 }
 
 // 纯黑极客模式
@@ -48,6 +80,38 @@ html.dark {
   --login-primary-btn: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
   --login-glow-1: rgba(79, 70, 229, 0.4);
   --login-glow-2: rgba(124, 58, 237, 0.35);
+
+  // 基础背景与面板
+  --rag-bg-container: #090d16;
+  --rag-bg-sidebar: #0f172a;
+  --rag-bg-terminal: #0b111e;
+  
+  // 边框与穿透线
+  --rag-border-color: #1e293b;
+  --rag-border-sub: #1e293b;
+  
+  // 文本色彩梯度
+  --rag-text-title: #f1f5f9;
+  --rag-text-main: #e2e8f0;
+  --rag-text-sub: #94a3b8;
+  
+  // 知识库语料卡片状态
+  --rag-card-item: #131c2e;
+  --rag-card-hover: #1e293b;
+  --rag-card-active: rgba(79, 70, 229, 0.15);
+  --rag-card-active-border: #6366f1;
+  
+  // 聊天气泡头像
+  --rag-user-avatar-bg: #334155;
+  --rag-user-avatar-text: #cbd5e1;
+  --rag-ai-avatar-bg: linear-gradient(135deg, #312e81 0%, #4c1d95 100%);
+  
+  // 核心品牌与流光
+  --rag-primary-brand: #6366f1;
+  --rag-primary-brand-glow: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  
+  // 外观控制台专属高级阴影
+  --rag-dock-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
 }
 
 // 科幻深蓝模式
@@ -65,6 +129,38 @@ html.dark-blue {
   --login-primary-btn: linear-gradient(90deg, #00bfff 0%, #1e90ff 100%);
   --login-glow-1: rgba(0, 191, 255, 0.45);
   --login-glow-2: rgba(5, 255, 180, 0.25);
+
+  // 基础背景与面板
+  --rag-bg-container: #051124;
+  --rag-bg-sidebar: #0b1e3b;
+  --rag-bg-terminal: #07162c;
+  
+  // 边框与穿透线
+  --rag-border-color: rgba(0, 191, 255, 0.25);
+  --rag-border-sub: rgba(0, 191, 255, 0.15);
+  
+  // 文本色彩梯度
+  --rag-text-title: #e0f2fe;
+  --rag-text-main: #f0fdfa;
+  --rag-text-sub: #38bdf8;
+  
+  // 知识库语料卡片状态
+  --rag-card-item: #0e2548;
+  --rag-card-hover: #12305c;
+  --rag-card-active: rgba(0, 191, 255, 0.12);
+  --rag-card-active-border: #38bdf8;
+  
+  // 聊天气泡头像
+  --rag-user-avatar-bg: #1e3a8a;
+  --rag-user-avatar-text: #e0f2fe;
+  --rag-ai-avatar-bg: linear-gradient(135deg, #0369a1 0%, #0d9488 100%);
+  
+  // 核心品牌与流光
+  --rag-primary-brand: #38bdf8;
+  --rag-primary-brand-glow: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%);
+  
+  // 外观控制台专属高级阴影
+  --rag-dock-shadow: 0 10px 40px -10px rgba(0, 191, 255, 0.15);
 }
 
 body {

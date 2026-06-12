@@ -48,7 +48,7 @@ const classObj = computed(() => ({
   left: 0;
   z-index: 1001;
   overflow: hidden;
-  background-color: var(--sidebar-menu-bg-color);
+  background-color: var(--sidebar-menu-bg-color, #304156);
 }
 
 .main-container {

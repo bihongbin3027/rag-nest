@@ -17,6 +17,15 @@ html.dark-blue {
   --border-color: $border-color;
   --line-color: #021229;
 
+  // 侧边栏（与 core/layout.scss 的 lighten($theme-bg-color, 4%) 保持一致）
+  --sidebar-menu-bg-color: #{lighten($theme-bg-color, 4%)};
+  --sidebar-menu-hover-bg-color: #{lighten($theme-bg-color, 8%)};
+  --sidebar-submenu-bg-color: #{lighten($theme-bg-color, 4%)};
+  --sidebar-submenu-hover-bg-color: #{lighten($theme-bg-color, 8%)};
+  --sidebar-menu-text-color: $font-color;
+  --sidebar-menu-active-text-color: $active-font-color;
+  --sidebar-submenu-active-text-color: $active-font-color;
+
   .box-bg-color {
     background-color: lighten($theme-bg-color, 4%);
   }
