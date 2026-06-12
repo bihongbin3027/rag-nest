@@ -24,6 +24,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@langchain/core": "^1.1.48",
+    "@langchain/openai": "^1.4.7",
+    "@langchain/qdrant": "^1.0.3",
+    "@langchain/textsplitters": "^1.0.1",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.1.0",
     "@nestjs/config": "^4.0.0",
@@ -39,19 +43,21 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "dayjs": "^1.11.8",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "helmet": "^8.2.0",
     "ioredis": "^5.11.1",
     "js-yaml": "^4.1.0",
     "log4js": "^6.9.1",
+    "mammoth": "^1.12.0",
     "mime-types": "^2.1.35",
     "multer": "^2.1.1",
     "mysql2": "^3.22.5",
-    "exceljs": "^4.4.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "path-to-regexp": "^8.4.2",
+    "pdf-parse": "^2.4.5",
     "reflect-metadata": "^0.2.2",
     "request-ip": "^3.3.0",
     "rimraf": "^5.0.1",
@@ -60,7 +66,8 @@
     "swagger-ui-express": "^5.0.1",
     "ts-enum-util": "^4.0.2",
     "typeorm": "^0.3.30",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

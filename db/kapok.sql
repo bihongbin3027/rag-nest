@@ -136,6 +136,7 @@ DROP TABLE IF EXISTS `sys_oss`;
 CREATE TABLE `sys_oss`  (
   `id` bigint(0) NOT NULL AUTO_INCREMENT,
   `url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件 url',
+  `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '原始文件名(RAG模块专属)',
   `size` int(0) NOT NULL COMMENT '文件size',
   `location` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件存放位置',
   `create_date` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
@@ -143,6 +144,11 @@ CREATE TABLE `sys_oss`  (
   `user_id` bigint(0) NOT NULL COMMENT '上传用户id',
   `user_account` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '上传用户帐号',
   `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件mimetype类型',
+  `parent_id` int(11) NULL DEFAULT 0 COMMENT '父级文件夹ID，0表示根目录'
+  `is_dir` tinyint(1) NULL DEFAULT 0 COMMENT '是否为文件夹：0否，1是',
+  `vector_status` varchar(20) NULL DEFAULT 'unprocessed' COMMENT '向量化状态：unprocessed未处理, processing处理中, success成功, failed失败'
+  `associated_table` varchar(255) NULL DEFAULT NULL COMMENT 'Text-to-SQL 轨道专属：动态生成的物理表名',
+  `rag_track` varchar(255) NULL DEFAULT NULL COMMENT 'RAG链路：VECTOR(文本向量), SQL(结构化表格)',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 

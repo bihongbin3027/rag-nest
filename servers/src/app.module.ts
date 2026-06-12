@@ -20,6 +20,7 @@ import { PermModule } from './system/perm/perm.module'
 import { OssModule } from './system/oss/oss.module'
 import { DeptModule } from './system/dept/dept.module'
 import { PostModule } from './system/post/post.module'
+import { RagModule } from './system/rag/rag.module'
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { PostModule } from './system/post/post.module'
     DeptModule,
     PostModule,
     OssModule,
+    RagModule,
     // 业务功能模块
   ],
   // app module 守卫，两个守卫分别依赖 UserService、PermService, 而 UserService、PermService 没有设置全局模块，
