@@ -55,31 +55,33 @@ CREATE TABLE `sys_menu`  (
 -- Records of sys_menu
 -- ----------------------------
 INSERT INTO `sys_menu` VALUES (1, '首页', 'dashboard', 1, 0, 0);
-INSERT INTO `sys_menu` VALUES (2, '权限管理', 'perm', 1, 0, 0);
-INSERT INTO `sys_menu` VALUES (3, '用户管理', 'perm_users', 1, 0, 2);
-INSERT INTO `sys_menu` VALUES (4, '角色管理', 'perm_roles', 1, 0, 2);
-INSERT INTO `sys_menu` VALUES (5, '系统设置', 'system', 1, 0, 0);
-INSERT INTO `sys_menu` VALUES (6, '资源管理', 'system_menus', 1, 0, 5);
-INSERT INTO `sys_menu` VALUES (7, '文件列表', 'system_oss', 1, 0, 5);
-INSERT INTO `sys_menu` VALUES (8, '编辑', 'perm_users:edit', 3, 0, 3);
-INSERT INTO `sys_menu` VALUES (9, '启用/禁用', 'perm_users:updateStatus', 3, 0, 3);
-INSERT INTO `sys_menu` VALUES (10, '重置密码', 'perm_users:resetPw', 3, 0, 3);
-INSERT INTO `sys_menu` VALUES (11, '批量导入', 'perm_users:createMultUser', 3, 0, 3);
-INSERT INTO `sys_menu` VALUES (12, '新增', 'perm_roles:create', 3, 0, 4);
-INSERT INTO `sys_menu` VALUES (13, '编辑', 'perm_roles:edit', 3, 0, 4);
-INSERT INTO `sys_menu` VALUES (14, '删除', 'perm_roles:del', 3, 0, 4);
-INSERT INTO `sys_menu` VALUES (15, '关联用户/解除关联', 'perm_roles:bind', 3, 0, 4);
-INSERT INTO `sys_menu` VALUES (16, '添加', 'system_menus:create', 3, 0, 6);
-INSERT INTO `sys_menu` VALUES (17, '编辑', 'system_menus:edit', 3, 0, 6);
-INSERT INTO `sys_menu` VALUES (18, '删除', 'system_menus:del', 3, 0, 6);
-INSERT INTO `sys_menu` VALUES (25, '部门管理', 'perm_depts', 1, 0, 2);
-INSERT INTO `sys_menu` VALUES (26, '岗位管理', 'perm_posts', 1, 0, 2);
-INSERT INTO `sys_menu` VALUES (27, '新增', 'perm_posts:create', 3, 0, 26);
-INSERT INTO `sys_menu` VALUES (28, '编辑', 'perm_posts:edit', 3, 0, 26);
-INSERT INTO `sys_menu` VALUES (29, '删除', 'perm_posts:del', 3, 0, 26);
-INSERT INTO `sys_menu` VALUES (30, '删除', 'perm_depts:del', 3, 0, 25);
-INSERT INTO `sys_menu` VALUES (31, '编辑', 'perm_depts:edit', 3, 0, 25);
-INSERT INTO `sys_menu` VALUES (32, '新增', 'perm_depts:create', 3, 0, 25);
+INSERT INTO `sys_menu` VALUES (2, 'RAG管理', 'rag-dir', 1, 0, 0);
+INSERT INTO `sys_menu` VALUES (3, '知识库资源管理', 'rag', 1, 0, 2);
+INSERT INTO `sys_menu` VALUES (4, '权限管理', 'perm', 1, 0, 0);
+INSERT INTO `sys_menu` VALUES (5, '用户管理', 'perm_users', 1, 0, 4);
+INSERT INTO `sys_menu` VALUES (6, '角色管理', 'perm_roles', 1, 0, 4);
+INSERT INTO `sys_menu` VALUES (7, '部门管理', 'perm_depts', 1, 0, 4);
+INSERT INTO `sys_menu` VALUES (8, '岗位管理', 'perm_posts', 1, 0, 4);
+INSERT INTO `sys_menu` VALUES (9, '系统设置', 'system', 1, 0, 0);
+INSERT INTO `sys_menu` VALUES (10, '资源管理', 'system_menus', 1, 0, 9);
+INSERT INTO `sys_menu` VALUES (11, '文件列表', 'system_oss', 1, 0, 9);
+INSERT INTO `sys_menu` VALUES (12, '编辑', 'perm_users:edit', 3, 0, 5);
+INSERT INTO `sys_menu` VALUES (13, '启用/禁用', 'perm_users:updateStatus', 3, 0, 5);
+INSERT INTO `sys_menu` VALUES (14, '重置密码', 'perm_users:resetPw', 3, 0, 5);
+INSERT INTO `sys_menu` VALUES (15, '批量导入', 'perm_users:createMultUser', 3, 0, 5);
+INSERT INTO `sys_menu` VALUES (16, '新增', 'perm_roles:create', 3, 0, 6);
+INSERT INTO `sys_menu` VALUES (17, '编辑', 'perm_roles:edit', 3, 0, 6);
+INSERT INTO `sys_menu` VALUES (18, '删除', 'perm_roles:del', 3, 0, 6);
+INSERT INTO `sys_menu` VALUES (19, '关联用户/解除关联', 'perm_roles:bind', 3, 0, 6);
+INSERT INTO `sys_menu` VALUES (20, '添加', 'system_menus:create', 3, 0, 10);
+INSERT INTO `sys_menu` VALUES (21, '编辑', 'system_menus:edit', 3, 0, 10);
+INSERT INTO `sys_menu` VALUES (22, '删除', 'system_menus:del', 3, 0, 10);
+INSERT INTO `sys_menu` VALUES (23, '新增', 'perm_posts:create', 3, 0, 8);
+INSERT INTO `sys_menu` VALUES (24, '编辑', 'perm_posts:edit', 3, 0, 8);
+INSERT INTO `sys_menu` VALUES (25, '删除', 'perm_posts:del', 3, 0, 8);
+INSERT INTO `sys_menu` VALUES (26, '删除', 'perm_depts:del', 3, 0, 7);
+INSERT INTO `sys_menu` VALUES (27, '编辑', 'perm_depts:edit', 3, 0, 7);
+INSERT INTO `sys_menu` VALUES (28, '新增', 'perm_depts:create', 3, 0, 7);
 
 -- ----------------------------
 -- Table structure for sys_menu_perm
@@ -96,35 +98,45 @@ CREATE TABLE `sys_menu_perm`  (
 -- ----------------------------
 -- Records of sys_menu_perm
 -- ----------------------------
-INSERT INTO `sys_menu_perm` VALUES (2, 3, '/api/user/list', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (3, 4, '/api/role/list', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (4, 4, '/api/role/one/:id/perms', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (5, 4, '/api/user/list', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (6, 6, '/api/menu/all', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (7, 6, '/api/menu/one/:parentId/btns', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (8, 6, '/api/menu/one/:id/menu-perm', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (9, 7, '/api/oss/list', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (10, 8, '/api/user/one/:id', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (11, 8, '/api/user', 'PUT');
-INSERT INTO `sys_menu_perm` VALUES (12, 9, '/api/user/status/change', 'PUT');
-INSERT INTO `sys_menu_perm` VALUES (13, 10, '/api/user/password/reset/:userId', 'PUT');
-INSERT INTO `sys_menu_perm` VALUES (15, 12, '/api/role', 'POST');
-INSERT INTO `sys_menu_perm` VALUES (16, 13, '/api/role', 'PUT');
-INSERT INTO `sys_menu_perm` VALUES (17, 14, '/api/role/:id', 'DELETE');
-INSERT INTO `sys_menu_perm` VALUES (18, 15, '/api/user/role/update', 'POST');
-INSERT INTO `sys_menu_perm` VALUES (20, 17, '/api/menu', 'PUT');
-INSERT INTO `sys_menu_perm` VALUES (21, 16, '/api/menu', 'POST');
-INSERT INTO `sys_menu_perm` VALUES (22, 18, '/api/menu/:id', 'DELETE');
-INSERT INTO `sys_menu_perm` VALUES (24, 11, '/api/user/import', 'POST');
-INSERT INTO `sys_menu_perm` VALUES (27, 25, '/api/dept/list', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (28, 26, '/api/post/list', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (32, 29, '/api/post/:id', 'DELETE');
-INSERT INTO `sys_menu_perm` VALUES (36, 27, '/api/post', 'POST');
-INSERT INTO `sys_menu_perm` VALUES (37, 28, '/api/post/:id', 'GET');
-INSERT INTO `sys_menu_perm` VALUES (38, 28, '/api/post', 'PUT');
-INSERT INTO `sys_menu_perm` VALUES (39, 30, '/api/dept/:id', 'DELETE');
-INSERT INTO `sys_menu_perm` VALUES (40, 31, '/api/dept', 'PUT');
-INSERT INTO `sys_menu_perm` VALUES (41, 32, '/api/dept', 'POST');
+INSERT IGNORE INTO `sys_menu_perm` (`id`, `menu_id`, `api_url`, `api_method`) VALUES
+  -- 知识库资源管理 (id=3)
+  (42, 3, '/api/rag/files/list',     'GET'),
+  (43, 3, '/api/rag/folder/create',   'POST'),
+  (44, 3, '/api/rag/file/register',   'POST'),
+  -- 用户管理 (id=5)
+  (45, 5, '/api/user/list',                       'GET'),
+  (46, 5, '/api/user/one/info',                   'GET'),
+  (47, 5, '/api/user/:id/role',                   'GET'),
+  (48, 5, '/api/user',                            'PUT'),
+  (49, 5, '/api/user/import',                     'POST'),
+  -- 角色管理 (id=6)
+  (50, 6, '/api/role/list',                       'GET'),
+  (51, 6, '/api/role/one/:id/perms',              'GET'),
+  (52, 6, '/api/role',                            'POST'),
+  (53, 6, '/api/role',                            'PUT'),
+  (54, 6, '/api/role/:id',                        'DELETE'),
+  (55, 6, '/api/user/role/update',                'POST'),
+  -- 部门管理 (id=7)
+  (56, 7, '/api/dept/list',                       'GET'),
+  (57, 7, '/api/dept',                            'POST'),
+  (58, 7, '/api/dept',                            'PUT'),
+  (59, 7, '/api/dept/:id',                        'DELETE'),
+  -- 岗位管理 (id=8)
+  (60, 8, '/api/post/list',                       'GET'),
+  (61, 8, '/api/post/:id',                        'GET'),
+  (62, 8, '/api/post',                            'POST'),
+  (63, 8, '/api/post',                            'PUT'),
+  (64, 8, '/api/post/:id',                        'DELETE'),
+  -- 资源管理 (id=10)
+  (65, 10, '/api/menu/all',                       'GET'),
+  (66, 10, '/api/menu/one/:parentId/btns',       'GET'),
+  (67, 10, '/api/menu/one/:id/menu-perm',         'GET'),
+  (68, 10, '/api/menu',                           'POST'),
+  (69, 10, '/api/menu',                           'PUT'),
+  (70, 10, '/api/menu/:id',                       'DELETE'),
+  -- 文件列表 (id=11)
+  (71, 11, '/api/oss/list',                       'GET'),
+  (72, 11, '/api/oss/upload',                     'POST');
 
 -- ----------------------------
 -- Table structure for sys_oss
@@ -202,7 +214,22 @@ CREATE TABLE `sys_role_menu`  (
 -- ----------------------------
 -- Records of sys_role_menu
 -- ----------------------------
+-- role_id=1 超管：拥有全部菜单（含 type=3 按钮权限，便于 sys_menu_perm 链路完整）
 INSERT INTO `sys_role_menu` VALUES (1, 1, 1);
+-- role_id=2 普通用户（test）：补全为"所有 type=1 菜单都可见"
+-- 注：这是测试账号，请按业务最小权限原则再收敛
+INSERT IGNORE INTO `sys_role_menu` (`id`, `role_id`, `menu_id`) VALUES
+  (21, 2, 1),     -- 首页
+  (22, 2, 2),     -- RAG管理（父级）
+  (23, 2, 3),     -- 知识库资源管理
+  (24, 2, 4),     -- 权限管理（父级）
+  (25, 2, 5),     -- 用户管理
+  (26, 2, 6),     -- 角色管理
+  (27, 2, 7),     -- 部门管理
+  (28, 2, 8),     -- 岗位管理
+  (29, 2, 9),     -- 系统设置（父级）
+  (30, 2, 10),    -- 资源管理
+  (31, 2, 11);    -- 文件列表
 
 -- ----------------------------
 -- Table structure for sys_user

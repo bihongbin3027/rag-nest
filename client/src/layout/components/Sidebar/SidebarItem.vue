@@ -1,9 +1,22 @@
 <template>
-  <div v-if="!item.meta?.hidden || onlyOneChild?.meta?.noShowingChildren" :class="{ 'simple-mode': props.isCollapse, 'first-level': props.isFirstLevel }">
-    <template v-if="!item.meta?.hidden && hasOneShowingChild(item.children || [], item) && (!onlyOneChild?.children || onlyOneChild?.meta?.noShowingChildren) && !item.meta?.alwayShow">
+  <div
+    v-if="!item.meta?.hidden || onlyOneChild?.meta?.noShowingChildren"
+    :class="{ 'simple-mode': props.isCollapse, 'first-level': props.isFirstLevel }"
+  >
+    <template
+      v-if="
+        !item.meta?.hidden &&
+        hasOneShowingChild(item.children || [], item) &&
+        (!onlyOneChild?.children || onlyOneChild?.meta?.noShowingChildren) &&
+        !item.meta?.alwayShow
+      "
+    >
       <sidebar-item-link v-if="onlyOneChild?.meta" :to="resolvePath(onlyOneChild.path)">
         <el-menu-item :index="resolvePath(onlyOneChild.path)">
-          <SidebarItemIcon v-if="!!(onlyOneChild.meta?.icon || item.meta?.icon)" :icon="((onlyOneChild.meta?.icon || item.meta?.icon) as string)"></SidebarItemIcon>
+          <SidebarItemIcon
+            v-if="!!(onlyOneChild.meta?.icon || item.meta?.icon)"
+            :icon="((onlyOneChild.meta?.icon || item.meta?.icon) as string)"
+          ></SidebarItemIcon>
           <template #title>{{ onlyOneChild.meta?.title }}</template>
         </el-menu-item>
       </sidebar-item-link>
@@ -13,7 +26,15 @@
         <SidebarItemIcon v-if="!!item.meta?.icon" :icon="(item.meta?.icon as string)"></SidebarItemIcon>
         <span>{{ item.meta?.title }}</span>
       </template>
-      <sidebar-item v-for="child in item.children" :key="child.path" :is-collapse="props.isCollapse" :is-first-level="false" :item="child" :base-path="resolvePath(child.path)" class="nest-menu" />
+      <sidebar-item
+        v-for="child in item.children"
+        :key="child.path"
+        :is-collapse="props.isCollapse"
+        :is-first-level="false"
+        :item="child"
+        :base-path="resolvePath(child.path)"
+        class="nest-menu"
+      />
     </el-sub-menu>
   </div>
 </template>
