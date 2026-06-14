@@ -43,7 +43,7 @@ export class RagController {
     if (!req.user || req.user.type !== UserType.SUPER_ADMIN) {
       return ResultData.fail(HttpStatus.FORBIDDEN, '权限不足：仅管理员可创建目录')
     }
-    // 前端表单字段名是 'name'，映射到 entity 的 fileName
+
     const result = await this.ragService.createFolder(dto.name, Number(dto.parentId) || 0)
     return ResultData.ok(result)
   }

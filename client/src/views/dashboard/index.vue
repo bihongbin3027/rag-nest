@@ -26,8 +26,8 @@
               <div class="file-info">
                 <span class="file-name" :title="item.fileName">{{ item.fileName }}</span>
                 <div class="file-tags">
-                  <el-tag size="small" :type="item.rag_track === 'SQL' ? 'success' : 'primary'" effect="plain">
-                    {{ item.rag_track === 'SQL' ? '结构化报表' : '长文本向量' }}
+                  <el-tag size="small" :type="item.ragTrack === 'sql' ? 'success' : 'primary'" effect="plain">
+                    {{ item.ragTrack === 'sql' ? '结构化报表' : '长文本向量' }}
                   </el-tag>
                   <span class="file-size">{{ formatSize(item.size) }}</span>
                 </div>
@@ -132,13 +132,14 @@ import { ref, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Collection, Delete, User, Position, DataAnalysis, DocumentCopy, CircleCheck } from '@element-plus/icons-vue'
 import { marked } from 'marked'
-import { getKnowledgeFilesApi, clearKnowledgeSessionApi, askQuestionStreamApi } from '@/api/rag'
+import { getKnowledgeFileList, askQuestionStreamApi, type RagAssetItem } from '@/api/rag'
 
 interface SourceFile {
   id: number
   fileName: string
-  size: string
-  rag_track: 'VECTOR' | 'SQL'
+  size: number
+  ragTrack: 'vector' | 'sql' | null
+  isFolder: 0 | 1
 }
 
 interface ChatMessage {
@@ -158,13 +159,21 @@ const scrollbarRef = ref()
 const fetchKnowledgeSources = async () => {
   sourcesLoading.value = true
   try {
-    const res: any = await getKnowledgeFilesApi()
-    sourceFiles.value = res.data || [
-      { id: 101, fileName: '2026年企业第一季度财务报表.xlsx', size: '148200', rag_track: 'SQL' },
-      { id: 102, fileName: '企业核心人力资源与薪酬管理红头文件.pdf', size: '2541000', rag_track: 'VECTOR' }
-    ]
+    // 后端 ResultData.ok 已被 axios 拦截器解包，这里再按 RAGResponse 形态取 data
+    const res: any = await getKnowledgeFileList(0)
+    const list: RagAssetItem[] = (res?.data ?? res ?? []) as RagAssetItem[]
+    // 只把"非文件夹"作为可选知识源
+    sourceFiles.value = list
+      .filter((i) => !i.isFolder)
+      .map((i) => ({
+        id: i.id,
+        fileName: i.fileName,
+        size: i.size,
+        ragTrack: i.ragTrack,
+        isFolder: i.isFolder
+      }))
   } catch (err) {
-    console.error('知识库拉取失败，启用高保真沙盒预览数据', err)
+    console.error('知识库拉取失败，请检查服务端是否启动', err)
   } finally {
     sourcesLoading.value = false
   }
@@ -236,17 +245,20 @@ const renderMarkdown = (text: string) => {
   return marked(text)
 }
 
+/**
+ * 清空当前会话上下文
+ * 注：会话持久化（多轮记忆）属于 P1-2 工作，当前仅清空本地 UI 状态。
+ * sessionId 是后端 SSE 在收到首次 ask-stream 后由控制器返回的，目前由前端生成本地 ID 占位，
+ * 待会话 API 落地后会真正调用后端的 /rag/session/:id 接口清空服务端历史。
+ */
 const clearSession = async () => {
-  if (sessionId.value) {
-    await clearKnowledgeSessionApi(sessionId.value)
-  }
+  sessionId.value = ''
   chatHistory.value = []
   ElMessage.success('当前上下文历史已安全销毁释放')
 }
 
-const formatSize = (bytesStr: string) => {
-  const bytes = Number(bytesStr)
-  if (isNaN(bytes) || bytes === 0) return '0 B'
+const formatSize = (bytes: number) => {
+  if (!bytes || bytes <= 0) return '0 B'
   const k = 1024
   const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))

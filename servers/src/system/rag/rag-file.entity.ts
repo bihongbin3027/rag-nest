@@ -2,15 +2,15 @@ import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn } from 'typeor
 import { ApiProperty } from '@nestjs/swagger'
 
 export enum RagTrackEnum {
-  SQL = 'SQL',
-  VECTOR = 'VECTOR',
+  SQL = 'sql',
+  VECTOR = 'vector',
 }
 
 export enum VectorStatusEnum {
-  PENDING = 'PENDING', // 未开始 / 待入队
-  PROCESSING = 'PROCESSING', // 向量化切片中
-  SUCCESS = 'SUCCESS', // 向量化成功
-  FAILED = 'FAILED', // 向量化失败
+  PENDING = 'pending', // 未开始 / 待入队
+  PROCESSING = 'processing', // 向量化切片中
+  SUCCESS = 'success', // 向量化成功
+  FAILED = 'failed', // 向量化失败
 }
 
 @Entity({ name: 'sys_rag_file' })

@@ -36,33 +36,51 @@ html.normal {
   --rag-bg-container: #f8fafc;
   --rag-bg-sidebar: #ffffff;
   --rag-bg-terminal: #ffffff;
-  
+
   // 边框与穿透线
   --rag-border-color: #e2e8f0;
   --rag-border-sub: #f1f5f9;
-  
+
   // 文本色彩梯度
   --rag-text-title: #1e293b;
   --rag-text-main: #0f172a;
   --rag-text-sub: #64748b;
-  
+
   // 知识库语料卡片状态
   --rag-card-item: #ffffff;
   --rag-card-hover: #f8fafc;
   --rag-card-active: #eef2ff;
   --rag-card-active-border: #818cf8;
-  
+
   // 聊天气泡头像
   --rag-user-avatar-bg: #f1f5f9;
   --rag-user-avatar-text: #475569;
   --rag-ai-avatar-bg: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
-  
+
   // 核心品牌与流光
   --rag-primary-brand: #4f46e5;
   --rag-primary-brand-glow: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  
+
   // 外观控制台专属高级阴影
   --rag-dock-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06);
+
+  // 语义状态色（用于状态徽章、提示横幅、空状态等）
+  --rag-success: #10b981;
+  --rag-success-bg: rgba(16, 185, 129, 0.12);
+  --rag-warning: #f59e0b;
+  --rag-warning-bg: rgba(245, 158, 11, 0.12);
+  --rag-danger: #ef4444;
+  --rag-danger-bg: rgba(239, 68, 68, 0.12);
+  --rag-info: #6366f1;
+  --rag-info-bg: rgba(99, 102, 241, 0.12);
+
+  // 卡片渐变高光
+  --rag-card-highlight: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(168, 85, 247, 0.02) 100%);
+
+  // 主题阴影色阶（用于悬停抬升、模态投影等）
+  --rag-shadow-sm: 0 2px 6px -1px rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --rag-shadow-md: 0 6px 16px -4px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --rag-shadow-lg: 0 16px 32px -8px rgba(15, 23, 42, 0.12), 0 4px 12px -4px rgba(15, 23, 42, 0.06);
 }
 
 // 纯黑极客模式
@@ -85,33 +103,51 @@ html.dark {
   --rag-bg-container: #090d16;
   --rag-bg-sidebar: #0f172a;
   --rag-bg-terminal: #0b111e;
-  
+
   // 边框与穿透线
   --rag-border-color: #1e293b;
   --rag-border-sub: #1e293b;
-  
+
   // 文本色彩梯度
   --rag-text-title: #f1f5f9;
   --rag-text-main: #e2e8f0;
   --rag-text-sub: #94a3b8;
-  
+
   // 知识库语料卡片状态
   --rag-card-item: #131c2e;
   --rag-card-hover: #1e293b;
   --rag-card-active: rgba(79, 70, 229, 0.15);
   --rag-card-active-border: #6366f1;
-  
+
   // 聊天气泡头像
   --rag-user-avatar-bg: #334155;
   --rag-user-avatar-text: #cbd5e1;
   --rag-ai-avatar-bg: linear-gradient(135deg, #312e81 0%, #4c1d95 100%);
-  
+
   // 核心品牌与流光
   --rag-primary-brand: #6366f1;
   --rag-primary-brand-glow: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-  
+
   // 外观控制台专属高级阴影
   --rag-dock-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+
+  // 语义状态色（深色主题下用更明亮的色阶以保证可读性）
+  --rag-success: #34d399;
+  --rag-success-bg: rgba(52, 211, 153, 0.15);
+  --rag-warning: #fbbf24;
+  --rag-warning-bg: rgba(251, 191, 36, 0.15);
+  --rag-danger: #f87171;
+  --rag-danger-bg: rgba(248, 113, 113, 0.15);
+  --rag-info: #818cf8;
+  --rag-info-bg: rgba(129, 140, 248, 0.15);
+
+  // 卡片渐变高光
+  --rag-card-highlight: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.03) 100%);
+
+  // 主题阴影色阶（深色下阴影更深）
+  --rag-shadow-sm: 0 2px 6px -1px rgba(0, 0, 0, 0.4);
+  --rag-shadow-md: 0 6px 16px -4px rgba(0, 0, 0, 0.5);
+  --rag-shadow-lg: 0 16px 40px -8px rgba(0, 0, 0, 0.7);
 }
 
 // 科幻深蓝模式
@@ -134,33 +170,51 @@ html.dark-blue {
   --rag-bg-container: #051124;
   --rag-bg-sidebar: #0b1e3b;
   --rag-bg-terminal: #07162c;
-  
+
   // 边框与穿透线
   --rag-border-color: rgba(0, 191, 255, 0.25);
   --rag-border-sub: rgba(0, 191, 255, 0.15);
-  
+
   // 文本色彩梯度
   --rag-text-title: #e0f2fe;
   --rag-text-main: #f0fdfa;
   --rag-text-sub: #38bdf8;
-  
+
   // 知识库语料卡片状态
   --rag-card-item: #0e2548;
   --rag-card-hover: #12305c;
   --rag-card-active: rgba(0, 191, 255, 0.12);
   --rag-card-active-border: #38bdf8;
-  
+
   // 聊天气泡头像
   --rag-user-avatar-bg: #1e3a8a;
   --rag-user-avatar-text: #e0f2fe;
   --rag-ai-avatar-bg: linear-gradient(135deg, #0369a1 0%, #0d9488 100%);
-  
+
   // 核心品牌与流光
   --rag-primary-brand: #38bdf8;
   --rag-primary-brand-glow: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%);
-  
+
   // 外观控制台专属高级阴影
   --rag-dock-shadow: 0 10px 40px -10px rgba(0, 191, 255, 0.15);
+
+  // 语义状态色（深蓝主题：青色系统一视觉）
+  --rag-success: #2dd4bf;
+  --rag-success-bg: rgba(45, 212, 191, 0.15);
+  --rag-warning: #fbbf24;
+  --rag-warning-bg: rgba(251, 191, 36, 0.15);
+  --rag-danger: #f87171;
+  --rag-danger-bg: rgba(248, 113, 113, 0.15);
+  --rag-info: #38bdf8;
+  --rag-info-bg: rgba(56, 189, 248, 0.15);
+
+  // 卡片渐变高光（深蓝主题：青色流光）
+  --rag-card-highlight: linear-gradient(135deg, rgba(0, 191, 255, 0.08) 0%, rgba(30, 144, 255, 0.03) 100%);
+
+  // 主题阴影色阶
+  --rag-shadow-sm: 0 2px 6px -1px rgba(0, 0, 0, 0.4);
+  --rag-shadow-md: 0 6px 16px -4px rgba(0, 0, 0, 0.5);
+  --rag-shadow-lg: 0 16px 40px -8px rgba(0, 0, 0, 0.6);
 }
 
 body {
