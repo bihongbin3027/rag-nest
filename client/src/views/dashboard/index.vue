@@ -85,6 +85,40 @@
                   {{ msg.role === 'user' ? '您' : '智能助手' }}
                 </div>
                 <div class="bubble-content" v-html="renderMarkdown(msg.content)"></div>
+
+                <!-- 🌟【P1-1 引用源】气泡下方渲染引用卡片 -->
+                <div v-if="msg.role === 'assistant' && msg.sources && msg.sources.length > 0" class="citations-wrapper">
+                  <div class="citations-header" @click="toggleCitations(index)">
+                    <el-icon class="citations-icon"><Paperclip /></el-icon>
+                    <span class="citations-title">参考来源</span>
+                    <span class="citations-count">{{ msg.sources.length }} 篇</span>
+                    <el-icon class="citations-arrow" :class="{ expanded: msg.sourcesExpanded }">
+                      <ArrowDown />
+                    </el-icon>
+                  </div>
+
+                  <transition name="citations-fade">
+                    <div v-show="msg.sourcesExpanded" class="citations-list">
+                      <div v-for="(src, i) in msg.sources" :key="`${index}-${i}`" class="citation-card">
+                        <div class="citation-head">
+                          <span class="citation-index">[{{ i + 1 }}]</span>
+                          <el-icon class="citation-file-icon"><Document /></el-icon>
+                          <span class="citation-filename" :title="src.fileName">{{ src.fileName }}</span>
+                          <span v-if="src.score !== null && src.score !== undefined" class="citation-score">
+                            <span class="score-dot"></span>
+                            相关度 {{ formatScore(src.score) }}
+                          </span>
+                        </div>
+                        <div class="citation-snippet">{{ src.content }}…</div>
+                        <div class="citation-meta">
+                          <span class="meta-chunk">切片 #{{ src.chunkIndex }}</span>
+                          <span class="meta-divider">·</span>
+                          <span class="meta-tip">点击卡片可在知识库查看原文</span>
+                        </div>
+                      </div>
+                    </div>
+                  </transition>
+                </div>
               </div>
             </div>
           </div>
@@ -130,9 +164,20 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Collection, Delete, User, Position, DataAnalysis, DocumentCopy, CircleCheck } from '@element-plus/icons-vue'
+import {
+  Collection,
+  Delete,
+  User,
+  Position,
+  DataAnalysis,
+  DocumentCopy,
+  CircleCheck,
+  Document,
+  Paperclip,
+  ArrowDown
+} from '@element-plus/icons-vue'
 import { marked } from 'marked'
-import { getKnowledgeFileList, askQuestionStreamApi, type RagAssetItem } from '@/api/rag'
+import { getKnowledgeFileList, askQuestionStreamApi, type RagAssetItem, type CitationItem } from '@/api/rag'
 
 interface SourceFile {
   id: number
@@ -145,6 +190,10 @@ interface SourceFile {
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
+  // 🌟【P1-1】引用源列表，由后端 SSE 的 code:'sources' 事件回填
+  sources?: CitationItem[]
+  // 引用卡片展开状态
+  sourcesExpanded?: boolean
 }
 
 const sourceFiles = ref<SourceFile[]>([])
@@ -159,10 +208,8 @@ const scrollbarRef = ref()
 const fetchKnowledgeSources = async () => {
   sourcesLoading.value = true
   try {
-    // 后端 ResultData.ok 已被 axios 拦截器解包，这里再按 RAGResponse 形态取 data
     const res: any = await getKnowledgeFileList(0)
     const list: RagAssetItem[] = (res?.data ?? res ?? []) as RagAssetItem[]
-    // 只把"非文件夹"作为可选知识源
     sourceFiles.value = list
       .filter((i) => !i.isFolder)
       .map((i) => ({
@@ -188,6 +235,11 @@ const toggleSource = (id: number) => {
   }
 }
 
+const toggleCitations = (index: number) => {
+  const msg = chatHistory.value[index]
+  if (msg) msg.sourcesExpanded = !msg.sourcesExpanded
+}
+
 const quickQuestion = (text: string) => {
   inputQuery.value = text
 }
@@ -207,7 +259,12 @@ const submitQuery = async () => {
   inputQuery.value = ''
   streamingActive.value = true
 
-  chatHistory.value.push({ role: 'assistant', content: '' })
+  chatHistory.value.push({
+    role: 'assistant',
+    content: '',
+    sources: undefined,
+    sourcesExpanded: true
+  })
   const aiMessageIndex = chatHistory.value.length - 1
   await scrollToBottom()
 
@@ -218,9 +275,19 @@ const submitQuery = async () => {
         sessionId: sessionId.value || undefined,
         sources: selectedSources.value
       },
-      async (chunkedText: string) => {
-        chatHistory.value[aiMessageIndex].content = chunkedText
-        await scrollToBottom()
+      {
+        onChunk: async (chunkedText) => {
+          chatHistory.value[aiMessageIndex].content = chunkedText
+          await scrollToBottom()
+        },
+        onSources: (sources) => {
+          chatHistory.value[aiMessageIndex].sources = sources
+        },
+        onError: (msg) => {
+          if (!chatHistory.value[aiMessageIndex].content) {
+            chatHistory.value[aiMessageIndex].content = `❌ 集群阻断: ${msg}`
+          }
+        }
       }
     )
   } catch (error: any) {
@@ -248,8 +315,6 @@ const renderMarkdown = (text: string) => {
 /**
  * 清空当前会话上下文
  * 注：会话持久化（多轮记忆）属于 P1-2 工作，当前仅清空本地 UI 状态。
- * sessionId 是后端 SSE 在收到首次 ask-stream 后由控制器返回的，目前由前端生成本地 ID 占位，
- * 待会话 API 落地后会真正调用后端的 /rag/session/:id 接口清空服务端历史。
  */
 const clearSession = async () => {
   sessionId.value = ''
@@ -265,6 +330,10 @@ const formatSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
+const formatScore = (score: number) => {
+  return `${(score * 100).toFixed(1)}%`
+}
+
 onMounted(() => {
   fetchKnowledgeSources()
 })
@@ -272,7 +341,7 @@ onMounted(() => {
 
 <style scoped>
 /* ==========================================================================
-   📐 布局逻辑渲染层 (完美绑定外层全局注入的主题变量)
+   📐 布局层
    ========================================================================== */
 .dashboard-chat-container {
   display: flex;
@@ -351,7 +420,6 @@ onMounted(() => {
   gap: 12px;
 }
 
-/* 穿透修改 Element Plus Checkbox 样式 */
 :deep(.el-checkbox__inner) {
   background-color: var(--rag-card-item) !important;
   border-color: var(--rag-border-color) !important;
@@ -503,6 +571,9 @@ onMounted(() => {
   line-height: 1.5;
 }
 
+/* ==========================================================================
+   💬 消息气泡
+   ========================================================================== */
 .message-row {
   display: flex;
   gap: 16px;
@@ -537,6 +608,7 @@ onMounted(() => {
 .message-bubble-wrapper {
   flex: 1;
   overflow: hidden;
+  min-width: 0;
 }
 
 .bubble-sender {
@@ -561,7 +633,6 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-/* 行内代码块高亮适配 */
 .bubble-content :deep(code) {
   background-color: var(--rag-bg-container);
   padding: 2px 6px;
@@ -572,6 +643,271 @@ onMounted(() => {
   transition: background-color 0.3s ease;
 }
 
+.bubble-content :deep(pre) {
+  background-color: var(--rag-bg-container);
+  padding: 12px 14px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 10px 0;
+  border: 1px solid var(--rag-border-sub);
+}
+
+.bubble-content :deep(pre code) {
+  background: transparent;
+  padding: 0;
+  color: var(--rag-text-main);
+  font-size: 13px;
+}
+
+.bubble-content :deep(ul),
+.bubble-content :deep(ol) {
+  margin: 6px 0 10px;
+  padding-left: 22px;
+}
+
+.bubble-content :deep(li) {
+  margin: 4px 0;
+}
+
+.bubble-content :deep(h1),
+.bubble-content :deep(h2),
+.bubble-content :deep(h3) {
+  margin: 14px 0 8px;
+  font-weight: 600;
+  color: var(--rag-text-title);
+}
+
+.bubble-content :deep(h1) {
+  font-size: 20px;
+}
+.bubble-content :deep(h2) {
+  font-size: 17px;
+}
+.bubble-content :deep(h3) {
+  font-size: 15px;
+}
+
+.bubble-content :deep(blockquote) {
+  margin: 10px 0;
+  padding: 8px 14px;
+  border-left: 3px solid var(--rag-primary-brand);
+  background-color: var(--rag-card-hover);
+  border-radius: 0 6px 6px 0;
+  color: var(--rag-text-sub);
+}
+
+.bubble-content :deep(table) {
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 13px;
+  width: 100%;
+}
+
+.bubble-content :deep(th),
+.bubble-content :deep(td) {
+  border: 1px solid var(--rag-border-sub);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.bubble-content :deep(th) {
+  background-color: var(--rag-bg-container);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   🌟【P1-1】引用源卡片
+   ========================================================================== */
+.citations-wrapper {
+  margin-top: 14px;
+  border: 1px solid var(--rag-border-sub);
+  border-radius: 12px;
+  background-color: var(--rag-card-item);
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.citations-wrapper:hover {
+  border-color: var(--rag-border-color);
+}
+
+.citations-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.citations-header:hover {
+  background-color: var(--rag-card-hover);
+}
+
+.citations-icon {
+  font-size: 14px;
+  color: var(--rag-primary-brand);
+}
+
+.citations-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rag-text-title);
+}
+
+.citations-count {
+  font-size: 12px;
+  color: var(--rag-text-sub);
+  background-color: var(--rag-info-bg);
+  color: var(--rag-info);
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.citations-arrow {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--rag-text-sub);
+  transition: transform 0.25s ease;
+}
+
+.citations-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.citations-list {
+  padding: 4px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--rag-border-sub);
+  padding-top: 12px;
+}
+
+.citation-card {
+  padding: 12px 14px;
+  background-color: var(--rag-bg-container);
+  border: 1px solid var(--rag-border-sub);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.citation-card:hover {
+  border-color: var(--rag-primary-brand);
+  background-color: var(--rag-card-hover);
+  transform: translateX(2px);
+}
+
+.citation-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.citation-index {
+  font-weight: 700;
+  color: var(--rag-primary-brand);
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+}
+
+.citation-file-icon {
+  font-size: 14px;
+  color: var(--rag-info);
+  flex-shrink: 0;
+}
+
+.citation-filename {
+  font-weight: 600;
+  color: var(--rag-text-title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.citation-score {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--rag-success);
+  background-color: var(--rag-success-bg);
+  padding: 2px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.citation-score .score-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--rag-success);
+}
+
+.citation-snippet {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--rag-text-main);
+  background-color: var(--rag-card-item);
+  border-left: 3px solid var(--rag-primary-brand);
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.citation-meta {
+  font-size: 11px;
+  color: var(--rag-text-sub);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meta-chunk {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+}
+
+.meta-divider {
+  opacity: 0.5;
+}
+
+.meta-tip {
+  font-style: italic;
+}
+
+/* 折叠过渡 */
+.citations-fade-enter-active,
+.citations-fade-leave-active {
+  transition: opacity 0.25s ease, max-height 0.3s ease, padding 0.3s ease;
+  overflow: hidden;
+}
+
+.citations-fade-enter-from,
+.citations-fade-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.citations-fade-enter-to,
+.citations-fade-leave-from {
+  opacity: 1;
+  max-height: 1200px;
+}
+
+/* ==========================================================================
+   ⌨️ 输入区
+   ========================================================================== */
 .input-dashboard-dock {
   background: var(--rag-bg-terminal);
   padding: 20px 40px;

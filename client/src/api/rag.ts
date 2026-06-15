@@ -16,6 +16,15 @@ export interface RagAssetItem {
   updatedAt: string
 }
 
+// 引用源条目（P1-1 后端 citations 流推送）
+export interface CitationItem {
+  fileId: number
+  fileName: string
+  chunkIndex: number
+  content: string
+  score: number | null
+}
+
 // 统一业务返回格式包装模型（对应服务端的 ResultData）
 export interface RAGResponse<T = any> {
   code: number
@@ -71,14 +80,32 @@ export function deleteKnowledgeFile(id: number) {
 }
 
 /**
+ * 流式问答回调（P1-1 扩展 onSources）
+ */
+export interface StreamCallbacks {
+  /** LLM 流式回答的增量文本块（已拼好的字符串） */
+  onChunk: (text: string) => void
+  /** 后端推送的引用源列表（一次性），用于气泡下方渲染引用卡片 */
+  onSources?: (sources: CitationItem[]) => void
+  /** 流式过程出现异常时触发 */
+  onError?: (msg: string) => void
+}
+
+/**
  * 核心：基于项目原生 Axios 实例的 SSE 异步流式问答引擎
- * @param data 传参主体
- * @param onChunk 实时蹦字回调函数
+ *
+ * 协议约定（与后端 rag.service.ts 的 res.write 一一对应）：
+ * - { code: 200, data: '...' }     → 文本块，调 onChunk
+ * - { code: 'sources', data: [...] } → 引用源列表，调 onSources
+ * - { code: 500, data: '...' }     → 异常，调 onError
+ * - { code: 200, data: 'stream_ended' } → 流结束哨兵
  */
 export function askQuestionStreamApi(
   data: { question: string; sessionId?: string; sources?: number[] },
-  onChunk: (text: string) => void
+  callbacks: StreamCallbacks
 ) {
+  const { onChunk, onSources, onError } = callbacks
+
   return request({
     url: '/rag/ask-stream',
     method: 'post',
@@ -89,26 +116,39 @@ export function askQuestionStreamApi(
       const rawText = progressEvent.event.target.responseText
       if (!rawText) return
 
+      // SSE 数据通常由 "\n\n" 分隔的多行 data: {...} 组成；
+      // 按 "\n" 切行后逐条解析
       const lines = rawText.split('\n')
       let combinedChunks = ''
 
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonStr = line.slice(6).trim()
-          if (!jsonStr) continue
+        if (!line.startsWith('data: ')) continue
+        const jsonStr = line.slice(6).trim()
+        if (!jsonStr) continue
 
-          try {
-            const parsed = JSON.parse(jsonStr)
-            if (parsed.code === 500) {
-              onChunk(`⚠️ [集群阻断]: ${parsed.msg || parsed.data || '未知错误'}`)
-              return
-            }
-            if (parsed.data && parsed.data !== 'stream_ended') {
-              combinedChunks += parsed.data
-            }
-          } catch (e) {
-            // 忽略边界状态下 JSON 截断引起的解析闪烁
+        try {
+          const parsed = JSON.parse(jsonStr)
+
+          // 引用源元数据（P1-1）
+          if (parsed.code === 'sources' && Array.isArray(parsed.data)) {
+            onSources?.(parsed.data as CitationItem[])
+            continue
           }
+
+          // 异常
+          if (parsed.code === 500) {
+            const msg = parsed.msg || parsed.data || '集群响应异常'
+            onError?.(String(msg))
+            continue
+          }
+
+          // 文本块 / 哨兵
+          if (typeof parsed.data === 'string') {
+            if (parsed.data === 'stream_ended') continue
+            combinedChunks += parsed.data
+          }
+        } catch (e) {
+          // 忽略边界状态下 JSON 截断引起的解析闪烁
         }
       }
 

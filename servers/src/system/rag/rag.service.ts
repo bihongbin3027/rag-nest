@@ -157,18 +157,18 @@ export class RagService {
   async executeDualTrackQuery(question: string, sessionId: string, sources: number[], res: Response): Promise<void> {
     res.write(`data: ${JSON.stringify({ code: 200, data: '正在检索关联知识库资产...\n' })}\n\n`)
     try {
-      let relevantDocs = []
+      let relevantDocs: { doc: Document; score: number }[] = []
       if (sources && sources.length > 0) {
         try {
           const vectorStore = await QdrantVectorStore.fromExistingCollection(this.embeddings, {
             url: this.qdrantUrl,
             collectionName: this.collectionName,
           })
-          const retriever = vectorStore.asRetriever({
-            k: 4,
+          // 使用 similaritySearchWithScore 拿到带相似度分数的结果，便于前端展示可信度
+          const raw = await vectorStore.similaritySearchWithScore(question, 4, {
             filter: { must: [{ key: 'metadata.fileId', match: { any: sources } }] },
-          })
-          relevantDocs = await retriever.invoke(question)
+          } as any)
+          relevantDocs = raw.map(([doc, score]) => ({ doc, score }))
         } catch (vErr) {
           relevantDocs = []
         }
@@ -184,8 +184,20 @@ export class RagService {
           if (content) res.write(`data: ${JSON.stringify({ code: 200, data: content })}\n\n`)
         }
       } else {
+        // 🌟【P1-1 引用源】在流式回答前先把 references 元数据推给前端，便于气泡下方渲染引用卡片
+        const citations = relevantDocs.map(({ doc, score }) => ({
+          fileId: doc.metadata?.fileId,
+          fileName: doc.metadata?.fileName || '未知来源',
+          chunkIndex: doc.metadata?.chunkIndex ?? -1,
+          // 切片内容片段，去除多余空白便于卡片展示；前端可点击展开完整内容
+          content: (doc.pageContent || '').replace(/\s+/g, ' ').trim().slice(0, 280),
+          // 相似度：Qdrant 返回的是 cosine 距离（越小越相似），这里统一转成 0~1 的"相关度"（越大越相关）
+          score: typeof score === 'number' ? Math.max(0, Math.min(1, 1 - score)) : null,
+        }))
+        res.write(`data: ${JSON.stringify({ code: 'sources', data: citations })}\n\n`)
+
         const contextText = relevantDocs
-          .map((doc) => `【参考源: ${doc.metadata?.fileName}】\n${doc.pageContent}`)
+          .map(({ doc }) => `【参考源: ${doc.metadata?.fileName}】\n${doc.pageContent}`)
           .join('\n\n')
         res.write(`data: ${JSON.stringify({ code: 200, data: '已为您提炼关联企业物料，深度解答中：\n\n' })}\n\n`)
 
