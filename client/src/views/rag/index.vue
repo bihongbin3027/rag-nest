@@ -60,12 +60,26 @@
         </div>
       </div>
 
+      <!-- 🔧 面包屑：根目录 > 子目录 > ... -->
+      <div class="breadcrumb-bar">
+        <el-breadcrumb separator=">">
+          <el-breadcrumb-item v-for="(crumb, i) in breadcrumb" :key="crumb.id" @click="gotoBreadcrumb(i)">
+            <span :class="{ 'crumb-current': i === breadcrumb.length - 1 }">
+              <el-icon v-if="i === 0" class="crumb-icon"><HomeFilled /></el-icon>
+              {{ crumb.name }}
+            </span>
+          </el-breadcrumb-item>
+        </el-breadcrumb>
+      </div>
+
       <div v-loading="loading" class="data-display-area">
         <el-table
           v-if="viewMode === 'list' && tableData.length > 0"
           :data="tableData"
           row-key="id"
           class="custom-table"
+          :row-class-name="(row: any) => (row.row.isFolder ? 'row-clickable' : '')"
+          @row-click="(row: any) => enterFolder(row)"
         >
           <el-table-column prop="fileName" label="资源名称" min-width="240">
             <template #default="{ row }">
@@ -115,7 +129,12 @@
 
         <el-row v-else-if="viewMode === 'grid' && tableData.length > 0" :gutter="20" class="grid-layout">
           <el-col :span="6" v-for="item in tableData" :key="item.id" class="grid-col">
-            <el-card class="grid-item-card" shadow="hover">
+            <el-card
+              class="grid-item-card"
+              shadow="hover"
+              :class="{ 'row-clickable': item.isFolder }"
+              @click="enterFolder(item)"
+            >
               <div class="grid-card-main">
                 <div class="grid-header">
                   <el-icon :size="36" :class="item.isFolder ? 'folder-clr' : 'file-clr'">
@@ -167,7 +186,12 @@
         <el-form-item label="归属知识库" prop="parentId">
           <el-select v-model="registerForm.parentId" placeholder="请选择归属的父级知识库目录" style="width: 100%">
             <el-option label="根目录 (不归属任何知识库)" :value="0" />
-            <el-option v-for="folder in folderOptions" :key="folder.id" :label="folder.fileName" :value="folder.id" />
+            <el-option
+              v-for="folder in folderOptions"
+              :key="folder.id"
+              :label="folder.isCurrent ? `${folder.name} (当前位置)` : folder.name"
+              :value="folder.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="语料文件" prop="file">
@@ -208,7 +232,8 @@ import {
   Refresh,
   Delete,
   FolderDelete,
-  UploadFilled
+  UploadFilled,
+  HomeFilled
 } from '@element-plus/icons-vue'
 
 import {
@@ -224,7 +249,9 @@ const loading = ref(false)
 const submitLoading = ref(false)
 const viewMode = ref<'list' | 'grid'>('list')
 const tableData = ref<RagAssetItem[]>([])
-const currentParentId = ref<number>(0)
+// 🔧 面包屑路径：[{id:0, name:'根目录'}, {id:1, name:'人事部'}, ...]
+const breadcrumb = ref<{ id: number; name: string }[]>([{ id: 0, name: '根目录' }])
+const currentParentId = computed(() => breadcrumb.value[breadcrumb.value.length - 1].id)
 
 // 对接后端检索参数
 const queryParams = reactive({
@@ -284,18 +311,34 @@ const metricsData = computed(() => {
    ====================================================================== */
 
 // 🌐 读取列表（GET /api/rag/files/list）
+// 根目录(parentId=0) 时同时拉"目录(parentId=0)" + "顶层未归属文件(parentId=0)" —— 这两个 SQL 完全一致，
+// 后端 parentId 过滤一次性带回来，无需两次请求。
 const fetchData = async () => {
   loading.value = true
   try {
-    const res = await getKnowledgeFileList(currentParentId.value)
-    const list = (res as any)?.data ?? res
-    tableData.value = (Array.isArray(list) ? list : []) as RagAssetItem[]
+    const res: any = await getKnowledgeFileList(currentParentId.value)
+    const list: RagAssetItem[] = (res?.data ?? res ?? []) as RagAssetItem[]
+    tableData.value = Array.isArray(list) ? list : []
   } catch (error) {
     ElMessage.error('获取知识库资产列表失败')
     console.error(error)
   } finally {
     loading.value = false
   }
+}
+
+// 📂 进入子目录：往面包屑 push 一节，重新拉数据
+const enterFolder = (row: RagAssetItem) => {
+  if (!row.isFolder) return
+  breadcrumb.value.push({ id: row.id, name: row.fileName })
+  fetchData()
+}
+
+// 🍞 点击面包屑某节：截断到那一节，重新拉数据（点第一节 = 回到根目录）
+const gotoBreadcrumb = (index: number) => {
+  if (index < 0 || index >= breadcrumb.value.length) return
+  breadcrumb.value = breadcrumb.value.slice(0, index + 1)
+  fetchData()
 }
 
 // 📂 新建文件夹弹窗与提交（POST /api/rag/folder/create）
@@ -342,11 +385,18 @@ const registerRules = reactive<FormRules>({
   file: [{ required: true, message: '请选择要上传的语料文件', trigger: 'change' }]
 })
 
-// 仅展示目录项
-const folderOptions = computed(() => tableData.value.filter((item) => item.isFolder === 1))
+// 🔧 "归属知识库"下拉选项 = 面包屑路径上的所有父级 + 当前目录本身
+// 之前从 tableData.filter(isFolder) 取：进入子目录后子目录空时就没选项了。
+// 改成从 breadcrumb 推：用户在哪个位置，能选的"归属"就是整条路径上每一级。
+const folderOptions = computed(() =>
+  breadcrumb.value
+    .filter((c) => c.id !== 0) // 根目录单独用硬编码 option 表达
+    .map((c) => ({ id: c.id, name: c.name, isCurrent: c.id === currentParentId.value }))
+)
 
 const openRegisterDialog = () => {
-  registerForm.parentId = 0
+  // 🔧 默认归属 = 当前所在目录（在人事部里点上传，就直接传到人事部，不用再选）
+  registerForm.parentId = currentParentId.value
   registerForm.file = null
   registerDialogVisible.value = true
 }
@@ -433,12 +483,13 @@ const getStatusText = (status: RagAssetItem['vectorStatus']) => {
   return map[status] || '排队中'
 }
 
-// 文件大小格式化（后端 size 字段单位：Byte）
-const formatSize = (bytes: number) => {
-  if (!bytes || bytes < 0) return '0 B'
+// 文件大小格式化（后端 size 字段单位：Byte；兼容后端 bigint → string 的情况）
+const formatSize = (bytes: number | string) => {
+  const n = Number(bytes) || 0
+  if (n <= 0) return '0 B'
   const units = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`
+  const i = Math.floor(Math.log(n) / Math.log(1024))
+  return `${(n / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`
 }
 
 onMounted(() => {
@@ -655,6 +706,40 @@ onMounted(() => {
 .data-display-area {
   padding: 16px 22px 22px;
   min-height: 380px;
+}
+
+/* 🔧 面包屑 */
+.breadcrumb-bar {
+  padding: 12px 22px 0;
+}
+
+:deep(.breadcrumb-bar .el-breadcrumb__item) {
+  cursor: pointer;
+}
+
+.crumb-current {
+  color: var(--rag-text-title);
+  font-weight: 600;
+}
+
+.crumb-icon {
+  font-size: 14px;
+  margin-right: 3px;
+  color: var(--rag-primary-brand);
+  vertical-align: top;
+}
+
+/* 🔧 目录行可点 + hover 高亮 */
+:deep(.custom-table .row-clickable) {
+  cursor: pointer;
+}
+
+:deep(.custom-table .row-clickable:hover td.el-table__cell) {
+  background-color: var(--rag-card-hover) !important;
+}
+
+.row-clickable {
+  cursor: pointer;
 }
 
 /* ==========================================================================

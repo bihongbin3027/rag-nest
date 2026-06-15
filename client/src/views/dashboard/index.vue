@@ -172,8 +172,20 @@
                       >
                         <div class="citation-head">
                           <span class="citation-index">[{{ i + 1 }}]</span>
-                          <el-icon class="citation-file-icon"><Document /></el-icon>
+                          <el-icon class="citation-file-icon">
+                            <component :is="src.ragTrack === 'sql' ? Grid : Document" />
+                          </el-icon>
                           <span class="citation-filename" :title="src.fileName">{{ src.fileName }}</span>
+                          <span
+                            v-if="src.ragTrack === 'sql'"
+                            class="citation-track-tag citation-track-sql"
+                            title="结构化表格行级召回"
+                          >
+                            <el-icon><Grid /></el-icon> SQL
+                          </span>
+                          <span v-else class="citation-track-tag citation-track-vector" title="长文本向量召回">
+                            <el-icon><Document /></el-icon> VECTOR
+                          </span>
                           <span v-if="src.score !== null && src.score !== undefined" class="citation-score">
                             <span class="score-dot"></span>
                             相关度 {{ formatScore(src.score) }}
@@ -181,7 +193,20 @@
                         </div>
                         <div class="citation-snippet">{{ src.content }}…</div>
                         <div class="citation-meta">
-                          <span class="meta-chunk">切片 #{{ src.chunkIndex }}</span>
+                          <!-- 【P1-3】SQL 轨道：sheet + 行号；vector 轨道：切片号 -->
+                          <template v-if="src.ragTrack === 'sql'">
+                            <span class="meta-chunk">
+                              <el-icon><Files /></el-icon>
+                              {{ src.sheetName || 'Sheet' }}
+                            </span>
+                            <span v-if="src.rowIndices && src.rowIndices.length > 0" class="meta-divider">·</span>
+                            <span v-if="src.rowIndices && src.rowIndices.length > 0" class="meta-chunk">
+                              行 {{ formatRowRange(src.rowIndices) }}
+                            </span>
+                          </template>
+                          <template v-else>
+                            <span class="meta-chunk">切片 #{{ src.chunkIndex }}</span>
+                          </template>
                           <span class="meta-divider">·</span>
                           <span class="meta-tip">
                             <el-icon><View /></el-icon> 点击预览原文
@@ -285,6 +310,8 @@ import {
   DocumentCopy,
   CircleCheck,
   Document,
+  Grid,
+  Files,
   Paperclip,
   ArrowDown,
   View,
@@ -581,6 +608,34 @@ const formatSize = (bytes: number) => {
 }
 
 const formatScore = (score: number) => `${(score * 100).toFixed(1)}%`
+
+/**
+ * 【P1-3】把行号数组压缩成"2-5, 8, 11-13"形式
+ * 避免一次性把上百行塞 UI。超 6 个连续段时只显示首尾。
+ */
+const formatRowRange = (rows: number[]): string => {
+  if (!rows || rows.length === 0) return '-'
+  if (rows.length === 1) return `${rows[0]}`
+  const sorted = [...rows].sort((a, b) => a - b)
+  const groups: string[] = []
+  let start = sorted[0]
+  let prev = sorted[0]
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === prev + 1) {
+      prev = sorted[i]
+      continue
+    }
+    groups.push(start === prev ? `${start}` : `${start}-${prev}`)
+    start = sorted[i]
+    prev = sorted[i]
+  }
+  groups.push(start === prev ? `${start}` : `${start}-${prev}`)
+  // 行号过多时只展示首尾两个区间
+  if (groups.length > 4) {
+    return `${groups[0]}, ${groups[1]}, … , ${groups[groups.length - 1]}`
+  }
+  return groups.join(', ')
+}
 
 onMounted(async () => {
   await Promise.all([fetchKnowledgeSources(), fetchSessions()])
@@ -1205,6 +1260,35 @@ onMounted(async () => {
   align-items: center;
   gap: 5px;
   flex-shrink: 0;
+}
+
+/* 【P1-3】轨道标签 */
+.citation-track-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.citation-track-tag .el-icon {
+  font-size: 11px;
+}
+
+.citation-track-sql {
+  color: var(--el-color-warning-dark, #b88230);
+  background-color: var(--rag-warning-bg);
+  border: 1px solid color-mix(in srgb, var(--el-color-warning) 30%, transparent);
+}
+
+.citation-track-vector {
+  color: var(--rag-info);
+  background-color: var(--rag-info-bg);
+  border: 1px solid color-mix(in srgb, var(--rag-info) 25%, transparent);
 }
 
 .citation-score .score-dot {

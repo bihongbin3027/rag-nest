@@ -63,7 +63,8 @@ ai:
   llm:
     apiKey: "sk-cp-4h_g1HgZqcJvjxdVXnwIe-9pAOLULKOngqby9aZi39xq1KiRk8-Y7HkBG-MP-8fiISB3upivOD5Q1IMRo5w-9ua5h4iyT0llnX2cCQYTQo5yBp3znQWeMnM"                  # API Key
     baseURL: "https://api.minimaxi.com/v1" # OneAPI 的地址
-    modelName: "MiniMax-M3"                # 或者是 qwen-max, deepseek-chat 等流式响应模型
+    chatModel: "MiniMax-Text-01"
+    embeddingModel: "embo-01"                # 或者是 qwen-max, deepseek-chat 等流式响应模型
     temperature: 0.2                       # 降低温度以保证知识库回答的严谨性
   qdrant:
     url: "http://localhost:6333"           # Qdrant 向量数据库的物理连接地址

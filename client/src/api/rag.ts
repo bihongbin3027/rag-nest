@@ -20,13 +20,19 @@ export interface RagAssetItem {
   updatedAt: string
 }
 
-// 【P1-1】引用源条目
+// 【P1-1 / P1-3】引用源条目
+// - ragTrack='vector'（长文本）：chunkIndex 是文本切片号
+// - ragTrack='sql'（结构化表格）：sheetName/rowIndices/columns 标记行级来源
 export interface CitationItem {
   fileId: number
   fileName: string
   chunkIndex: number
   content: string
   score: number | null
+  ragTrack?: 'vector' | 'sql' | null
+  sheetName?: string | null
+  rowIndices?: number[] | null
+  columns?: string[] | null
 }
 
 // 【P1-2】会话 & 消息
