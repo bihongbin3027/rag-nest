@@ -423,6 +423,8 @@ import {
   Aim
 } from '@element-plus/icons-vue'
 import { marked } from 'marked'
+// 【P2-2】rAF 合并渲染：用 useRafFn 把 onChunk 的多次赋值合并为 1 帧 1 次 marked
+import { useRafFn } from '@vueuse/core'
 import {
   getKnowledgeFileList,
   askQuestionStreamApi,
@@ -642,6 +644,27 @@ const inputQuery = ref('')
 const streamingActive = ref(false)
 const scrollbarRef = ref()
 
+// 🌟【P2-2】流式 markdown rAF 节流开关：true 走 rAF 合并（1 帧最多 1 次 marked）
+// false 一键回退到旧版"每 chunk 一次 marked + 一次 v-html"行为
+const USE_STREAM_RENDER_THROTTLE = ref(true)
+// rAF 帧间通讯：故意用普通 let 而非 ref —— 这两个变量不应该进入响应式系统，
+// 否则 rAF 回调内对它们的"读 + 写"会被 Vue 当成依赖、触发额外 patch，抵消节流收益
+let streamingPendingText = ''
+let streamingMsgIndex = -1
+// useRafFn 构造时不启动，需要时 resume()，流收敛时 pause()。
+// 一帧最多执行一次回调，浏览器后台标签页 rAF 自然停。
+const streamingRaf = useRafFn(
+  () => {
+    if (streamingMsgIndex < 0) return
+    const msg = chatHistory.value[streamingMsgIndex]
+    if (msg && msg.content !== streamingPendingText) {
+      msg.content = streamingPendingText
+      scrollToBottom()
+    }
+  },
+  { immediate: false }
+)
+
 // 🌟【P2-1】当前流式请求的 AbortController，停止按钮触发 abort
 // 旧值在 finally 里清理，保证下一次 submit 能拿到全新 controller
 const abortControllerRef = ref<AbortController | null>(null)
@@ -827,9 +850,18 @@ const submitQuery = async () => {
         sources: selectedSources.value
       },
       {
-        onChunk: async (chunkedText) => {
-          chatHistory.value[aiMessageIndex].content = chunkedText
-          await scrollToBottom()
+        onChunk: (chunkedText) => {
+          // 【P2-2】不再每 chunk 同步写 msg.content（会触发 1 次 marked + 1 次 v-html 重排）；
+          // 改为只更新"帧间变量"，rAF 下一帧把最新的 pendingText 一次性推到 msg.content
+          streamingMsgIndex = aiMessageIndex
+          streamingPendingText = chunkedText
+          if (USE_STREAM_RENDER_THROTTLE.value) {
+            if (!streamingRaf.isActive.value) streamingRaf.resume()
+          } else {
+            // 旧版回退路径：出问题时改 USE_STREAM_RENDER_THROTTLE=false 即可回到这里
+            chatHistory.value[aiMessageIndex].content = chunkedText
+            scrollToBottom()
+          }
         },
         onSession: (s) => {
           // 后端为本次创建了新会话，绑到本地
@@ -868,6 +900,9 @@ const submitQuery = async () => {
       chatHistory.value[aiMessageIndex].content = `❌ 网络异常: 与局域网 RAG 服务器连接超时`
     }
   } finally {
+    // 【P2-2】finally 是流收敛的总闸：无论成功/异常/被 abort，都走 flushStreamingRender
+    // 把 rAF 队列里"最后一段文本"同步落到 msg.content，再关 rAF、清状态
+    flushStreamingRender()
     streamingActive.value = false
     abortControllerRef.value = null
     await scrollToBottom()
@@ -886,6 +921,9 @@ const stopStreaming = () => {
   if (lastMsg && lastMsg.role === 'assistant') {
     lastMsg.stopped = true
   }
+  // 【P2-2】主动停止：同步把 rAF 还没来得及推的最后一段文本落到 content，
+  // 否则 v-html 上一次 marked 的结果可能停留在"rAF 上一帧"的状态，最后几个字符丢失
+  flushStreamingRender()
   if (ac) {
     try {
       ac.abort()
@@ -893,6 +931,20 @@ const stopStreaming = () => {
       /* ignore */
     }
   }
+}
+
+// 【P2-2】流收敛：流结束（finally）/ 主动停止 / 网络错误 三条路径都要走这里
+// 把 streamingPendingText 最后一次写进 msg.content、关 rAF、清状态。
+// 幂等：streamingMsgIndex === -1 时直接 return，可被多次调用。
+const flushStreamingRender = () => {
+  if (streamingMsgIndex < 0) return
+  const msg = chatHistory.value[streamingMsgIndex]
+  if (msg && streamingPendingText) {
+    msg.content = streamingPendingText
+  }
+  streamingRaf.pause()
+  streamingMsgIndex = -1
+  streamingPendingText = ''
 }
 
 const scrollToBottom = async () => {
