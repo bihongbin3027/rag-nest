@@ -329,6 +329,26 @@ CREATE TABLE `sys_rag_file` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='企业级双轨制核心知识库资产表';
 
 -- ----------------------------
+-- P0-3 审计日志表
+-- ----------------------------
+CREATE TABLE `sys_audit_log` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `user_id` int DEFAULT NULL COMMENT '操作用户ID（未登录为 NULL）',
+  `action` varchar(64) NOT NULL COMMENT '操作类型（如 upload_file / delete_file / ask_stream）',
+  `resource_type` varchar(32) DEFAULT NULL COMMENT '资源类型（如 rag_file / rag_session）',
+  `resource_id` int DEFAULT NULL COMMENT '资源ID（如 fileId）',
+  `method` varchar(10) NOT NULL COMMENT 'HTTP 方法',
+  `url` varchar(255) NOT NULL COMMENT '请求 URL',
+  `status_code` int NOT NULL COMMENT 'HTTP 状态码',
+  `ip` varchar(64) DEFAULT NULL COMMENT '客户端 IP',
+  `error_message` text DEFAULT NULL COMMENT '错误信息（status_code >= 400 时记录）',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+  PRIMARY KEY (`id`),
+  KEY `IDX_AUDIT_USER_TIME` (`user_id`, `created_at`) COMMENT '用户维度倒序翻页',
+  KEY `IDX_AUDIT_ACTION` (`action`) COMMENT '按操作类型筛选'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='审计日志表（等保/GDPR 追溯）';
+
+-- ----------------------------
 -- P1-2 多轮会话主表
 -- ----------------------------
 CREATE TABLE `sys_rag_session` (

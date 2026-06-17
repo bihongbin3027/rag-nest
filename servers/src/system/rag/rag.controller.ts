@@ -29,11 +29,13 @@ import { ResultData } from '../../common/utils/result'
 
 import { Keep } from '../../common/decorators/keep.decorator'
 import { RAG_UPLOAD_DIR } from './rag-upload.util'
+import { AuditInterceptor } from '../audit/audit.interceptor'
 
 @ApiTags('企业级双轨制核心知识库 RAG')
 @ApiBearerAuth()
 @Controller('rag')
 @UseGuards(JwtAuthGuard)
+@UseInterceptors(AuditInterceptor) // 【P0-3】RAG 模块所有 endpoint 自动审计
 export class RagController {
   // 上传根目录用模块顶层 RAG_UPLOAD_DIR 常量（@UseInterceptors 装饰器先于构造函数求值，必须顶层可用）
   private readonly serveRoot: string
