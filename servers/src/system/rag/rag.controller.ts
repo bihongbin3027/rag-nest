@@ -20,6 +20,7 @@ import { FileInterceptor } from '@nestjs/platform-express'
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import { Response } from 'express'
 import { diskStorage } from 'multer'
+import * as path from 'path'
 import { RagService } from './rag.service'
 import { JwtAuthGuard } from '../../common/guards/auth.guard'
 import { AllowNoPerm } from '../../common/decorators/perm.decorator'
@@ -117,6 +118,18 @@ export class RagController {
       // 【P3-5】文件大小上限 50MB，防止 OOM/磁盘占满；
       // 超限后 multer 抛 MulterError('LIMIT_FILE_SIZE')，controller 层不重启
       limits: { fileSize: 50 * 1024 * 1024 },
+      // 【P0-2】MIME 白名单：只允许 7 种已知安全的扩展名
+      // 阻止可执行文件 / 宏文档 / 未知脚本上传（防止恶意上传绕过 size 限制）
+      // cb(null, false) 表示"拒绝但不抛错"，multer 会跳过该文件
+      // frontend 拿到的是 file=undefined，可根据 400 错误给出"文件类型不支持"提示
+      fileFilter: (_req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase()
+        if (RagService.ALLOWED_UPLOAD_EXTS.includes(ext)) {
+          cb(null, true)
+        } else {
+          cb(null, false)
+        }
+      },
     }),
   )
   @ApiOperation({ summary: '上传并注册语料文件资产' })

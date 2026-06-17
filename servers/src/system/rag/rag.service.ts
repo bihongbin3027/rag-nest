@@ -166,6 +166,18 @@ class SimpleSemaphore {
 
 @Injectable()
 export class RagService {
+  // 【P0-2】上传白名单：只允许已知安全的扩展名（防可执行文件/宏文档绕过）
+  // 与 parseDocumentToVectorStore / parseStructuredToVectorStore 实际处理的扩展名保持一致
+  // 同步在 multer fileFilter（controller 层）和 ragTrack 判定（service 层）
+  static readonly ALLOWED_UPLOAD_EXTS: readonly string[] = [
+    '.txt',
+    '.md',
+    '.pdf',
+    '.docx',
+    '.xlsx',
+    '.xls',
+    '.csv',
+  ]
   private readonly logger = new Logger(RagService.name)
   private readonly llm: ChatOpenAI
   private readonly embeddings: MiniMaxEmbeddings
