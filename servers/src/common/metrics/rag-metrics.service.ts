@@ -75,6 +75,34 @@ export class RagMetricsService {
     registers: [defaultRegistry],
   })
 
+  // 【P2-1】HyDE（假设性回答生成）指标
+  public readonly hydeDuration = new Histogram({
+    name: 'rag_hyde_duration_seconds',
+    help: 'HyDE LLM 生成耗时（秒）',
+    buckets: [0.5, 1, 2, 5, 10, 20, 30],
+    registers: [defaultRegistry],
+  })
+  public readonly hydeTotal = new Counter({
+    name: 'rag_hyde_total',
+    help: 'HyDE Query 改写调用结果（按 status）',
+    labelNames: ['status'] as const, // success / failed
+    registers: [defaultRegistry],
+  })
+
+  // 【P2-1】Rerank（cross-encoder）指标
+  public readonly rerankTotal = new Counter({
+    name: 'rag_rerank_total',
+    help: 'Rerank 调用结果（按 status）',
+    labelNames: ['status'] as const, // success / failed / skipped
+    registers: [defaultRegistry],
+  })
+  public readonly rerankDuration = new Histogram({
+    name: 'rag_rerank_duration_seconds',
+    help: 'Rerank 推理耗时（秒）',
+    buckets: [0.05, 0.1, 0.2, 0.5, 1, 2, 5],
+    registers: [defaultRegistry],
+  })
+
   recordEtlComplete(status: 'success' | 'failed', durationSeconds: number): void {
     this.etlTotal.inc({ status })
     this.etlDuration.observe(durationSeconds)
@@ -104,8 +132,19 @@ export class RagMetricsService {
    * 上报熔断器状态变化（由 opossum onStateChange 回调触发）
    */
   setCircuitBreakerState(name: string, state: 'closed' | 'open' | 'halfOpen'): void {
-    // 简化：open/halfOpen 都记为 1（异常），closed 记为 0（正常）
     const value = state === 'closed' ? 0 : 1
     this.circuitBreakerState.set({ name, state }, value)
+  }
+
+  /**【P2-1】HyDE 调用结果上报 */
+  recordHyde(status: 'success' | 'failed', durationSeconds: number): void {
+    this.hydeTotal.inc({ status })
+    if (durationSeconds > 0) this.hydeDuration.observe(durationSeconds)
+  }
+
+  /**【P2-1】Rerank 调用结果上报 */
+  recordRerank(status: 'success' | 'failed' | 'skipped', durationSeconds: number): void {
+    this.rerankTotal.inc({ status })
+    if (durationSeconds > 0 && status === 'success') this.rerankDuration.observe(durationSeconds)
   }
 }

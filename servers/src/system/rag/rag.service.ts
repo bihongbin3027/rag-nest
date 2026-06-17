@@ -22,6 +22,7 @@ import { ResultData } from '../../common/utils/result'
 import { RAG_UPLOAD_DIR } from './rag-upload.util'
 import { RagMetricsService } from '../../common/metrics/rag-metrics.service'
 import { limitAndBreaker } from '../../common/utils/circuit-breaker.util'
+import { RerankProvider } from './rerank.provider'
 
 /**
  * 【P1-2 / P1-3】引用源条目
@@ -228,6 +229,7 @@ export class RagService {
     private readonly ragMessageRepository: Repository<RagMessageEntity>,
     private readonly configService: ConfigService,
     private readonly metrics: RagMetricsService, // 【P1-1】Prometheus 指标
+    private readonly reranker: RerankProvider, // 【P2-1】Cross-encoder Rerank
   ) {
     const apiKey = this.configService.get<string>('ai.llm.apiKey')
     const baseURL = this.configService.get<string>('ai.llm.baseURL')
@@ -675,6 +677,23 @@ export class RagService {
 
   // ============================================================================
   // ============================================================================
+
+  /**
+   * 【P2-1】HyDE prompt：让 LLM 生成"假设性回答"
+   * 用于在向量库中检索相关文档（行业标准做法）
+   */
+  private buildHydePrompt(question: string): string {
+    return `你是企业知识库问答助手。请基于以下用户问题，写一段 200-400 字的"假设性回答"，用于在向量库中检索相关文档。
+
+要求：
+- 用陈述句，模拟你"已经知道答案"的语气
+- 包含问题中提到的关键实体、概念、可能涉及的上下文
+- 不要写"我不知道"、"无法回答"等回避语
+- 不要包含"问题"、"回答"等元描述
+
+用户问题：${question}
+假设性回答：`
+  }
   // 📝【P3-3】LLM 文档摘要生成
   // ============================================================================
 
@@ -1510,6 +1529,7 @@ ${chunkText.slice(0, 1500)}`
     question: string,
     fileIds: number[] | null,
     userId: number, // 【P0-1】硬隔离：所有 Qdrant 检索必须按 userId 过滤
+    topK: number = 4, // 【P2-1】默认 4；executeDualTrackQuery 调 20 再 rerank 截到 4
   ): Promise<{ doc: Document; score: number }[]> {
     try {
       const vectorStore = await QdrantVectorStore.fromExistingCollection(this.embeddings, {
@@ -1531,7 +1551,7 @@ ${chunkText.slice(0, 1500)}`
           })
         }
       }
-      const raw = await vectorStore.similaritySearchWithScore(question, 4, filter as any)
+      const raw = await vectorStore.similaritySearchWithScore(question, topK, filter as any)
       // 【P1-1】上报向量检索指标 + top-1 相似度
       const topScore = raw.length > 0 ? raw[0][1] : null
       this.metrics.recordVectorSearch(topScore)
@@ -1576,16 +1596,51 @@ ${chunkText.slice(0, 1500)}`
     let fullAnswer = ''
 
     try {
+      // 【P2-1】HyDE：用 LLM 生成假设性回答喂给向量检索（提升召回率）
+      let retrievalQuery = question
+      const hydeT0 = Date.now()
+      try {
+        const hydeAnswer = (await this.safeLlmInvoke(this.buildHydePrompt(question))) as any
+        const hydeText = (typeof hydeAnswer?.content === 'string' ? hydeAnswer.content : '').trim()
+        if (hydeText) {
+          // 拼接原问题 + 假设性回答（业界标准做法：检索方向从"问题 ↔ 答案"变成"假设答案 ↔ 真答案"）
+          retrievalQuery = `${question}
+
+${hydeText}`
+          this.metrics.recordHyde('success', (Date.now() - hydeT0) / 1000)
+        }
+      } catch (err: any) {
+        this.logger.warn(`[P2-1 HyDE] LLM 调用失败，使用原 query: ${err?.message || err}`)
+        this.metrics.recordHyde('failed', 0)
+      }
+
+      // 【P2-1】召回 topK=20（多召回给 rerank 留余量）
+      const RECALL_TOPK = 20
+      const FINAL_TOPK = 4
       let relevantDocs: { doc: Document; score: number }[] = []
       if (sources && sources.length > 0) {
-        // 【P1-4】树形勾选：先把"文件夹 id + 文件 id"混合列表展开为纯文件 id
         const effectiveFileIds = await this.expandAssetIdsToFileIds(sources, userId, isSuperAdmin)
         if (effectiveFileIds.length > 0) {
-          relevantDocs = await this.vectorSearch(question, effectiveFileIds, userId)
+          relevantDocs = await this.vectorSearch(retrievalQuery, effectiveFileIds, userId, RECALL_TOPK)
         }
       } else {
-        // 【P1-6】未勾选任何资产：走全库相似度检索，但【P0-1】仍必须按 userId 硬过滤
-        relevantDocs = await this.vectorSearch(question, null, userId)
+        relevantDocs = await this.vectorSearch(retrievalQuery, null, userId, RECALL_TOPK)
+      }
+
+      // 【P2-1】cross-encoder 重排：取相关度 top FINAL_TOPK
+      if (relevantDocs.length > FINAL_TOPK) {
+        const rT0 = Date.now()
+        try {
+          // rerank 需要 { pageContent: string }[]，从 doc.pageContent 提取
+          const candidates = relevantDocs.map((d) => ({ pageContent: d.doc.pageContent }))
+          const reranked = await this.reranker.rerank(question, candidates, FINAL_TOPK)
+          relevantDocs = reranked.map((r) => relevantDocs[r.idx])
+          this.metrics.recordRerank('success', (Date.now() - rT0) / 1000)
+        } catch (err: any) {
+          this.logger.warn(`[P2-1 Rerank] 失败，回退到 top-${FINAL_TOPK}: ${err?.message || err}`)
+          relevantDocs = relevantDocs.slice(0, FINAL_TOPK)
+          this.metrics.recordRerank('skipped', 0)
+        }
       }
 
       if (relevantDocs.length === 0) {

@@ -7,3 +7,6 @@
 /logs
 
 desktop.files.json
+
+/.cache/
+.cache/

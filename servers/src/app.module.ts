@@ -94,12 +94,17 @@ import { RagModule } from './system/rag/rag.module'
     // 【P1-1】RAG 业务指标（RagMetricsService 全局可见）
     MetricsModule,
     // 【P1-2】BullMQ 全局队列：ETL 任务持久化 + 重试策略 + 并发控制（替代 SimpleSemaphore）
+    // 【P1-2 修复】必须显式剔除 keyPrefix —— BullMQ 用自己的 key 命名（bull:<queue>:<id>），
+    //   如果把 dev.yml 里的 `keyPrefix: "nest:"` 透传进去，ioredis 会把 BullMQ 写的 key 改成 `nest:bull:...`，
+    //   Worker 完成时 `moveToFinished` Lua 脚本找不到原 job key → "Missing key for job" 报错。
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        connection: config.get<any>('redis'),
-      }),
+      useFactory: (config: ConfigService) => {
+        const redisCfg = config.get<any>('redis') || {}
+        const { keyPrefix: _omit, ...bullConn } = redisCfg
+        return { connection: bullConn }
+      },
     }),
     // 系统基础模块
     UserModule,

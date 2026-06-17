@@ -5,6 +5,7 @@ import { BullModule } from '@nestjs/bullmq'
 import { RagService } from './rag.service'
 import { RagController } from './rag.controller'
 import { RagFileProcessor } from './rag-etl.processor'
+import { RerankProvider } from './rerank.provider'
 import { RagFileEntity } from './rag-file.entity'
 import { RagSessionEntity } from './rag-session.entity'
 import { RagMessageEntity } from './rag-message.entity'
@@ -29,7 +30,7 @@ import { RAG_ETL_QUEUE_NAME } from './rag-etl.constants'
     }),
     TypeOrmModule.forFeature([RagFileEntity, RagSessionEntity, RagMessageEntity])
   ],
-  providers: [RagService, RagFileProcessor],
+  providers: [RagService, RagFileProcessor, RerankProvider],
   controllers: [RagController]
 })
 export class RagModule {}
