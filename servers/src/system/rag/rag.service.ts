@@ -582,6 +582,81 @@ export class RagService {
     }
   }
 
+  /**
+   * 【P2-1】Contextual Retrieval（Anthropic 2024 风格）
+   * 给定整篇文档 + 单个 chunk，用 LLM 生成 50-100 token 的"上下文注释"
+   * 然后把 chunk content 改造为 `【上下文】{ctx}\n\n{chunk}`，再入库。
+   *
+   * 论文数据：可降 49% 检索失败；加 rerank 后降 67%。
+   * 成本：每个 chunk 一次 LLM 调用 → ETL 慢 5-10x；建议灰度开启。
+   *
+   * 失败兜底：返回 null（不改造 chunk，行为等同 P0/P1）
+   */
+  private async generateChunkContext(
+    fullDocText: string,
+    chunkText: string,
+    fileName: string,
+  ): Promise<string | null> {
+    if (!chunkText || chunkText.length < 20) return null
+    try {
+      const prompt = `你是文档上下文标注助手。请基于以下文档全文和当前片段，生成 50-100 字的"上下文注释"，说明该片段在文档中的位置、作用和与全文的关系。注释应让独立看片段的读者能理解它在说什么。
+
+文件：${fileName}
+文档全文：
+${fullDocText.slice(0, 6000)}${fullDocText.length > 6000 ? '...(截断)' : ''}
+
+当前片段：
+${chunkText.slice(0, 1500)}${chunkText.length > 1500 ? '...(截断)' : ''}
+
+直接输出注释内容（中文，50-100 字），不要带"本片段..."等开头、不要用"。"以外的标点结尾。`
+      const response: any = await Promise.race([
+        this.safeLlmInvoke(prompt),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('context 生成超时 10s')), 10000)),
+      ])
+      const ctx = (typeof response?.content === 'string' ? response.content : String(response?.content || '')).trim()
+      if (!ctx || ctx.length < 10) return null
+      return ctx.slice(0, 200) // 上限 200 字防 LLM 啰嗦
+    } catch (err: any) {
+      this.logger.warn(`[P2-1] context 生成失败（跳过）: ${err?.message || err}`)
+      return null
+    }
+  }
+
+  /**
+   * 【P2-1】批量给 chunks 加上下文注释（带并发限制 + 灰度开关）
+   * @returns 改造后的 chunks（in place 修改 pageContent）
+   */
+  private async applyContextualRetrieval(
+    documents: Document[],
+    fullDocText: string,
+    fileName: string,
+    isSqlTrack: boolean,
+  ): Promise<void> {
+    const enabled = this.configService.get<boolean>('ai.rag.p2.contextualRetrieval') === true
+    if (!enabled) return
+    // 限制每次最多 30 个 chunk（避免 LLM 调用爆炸）
+    const limit = this.configService.get<number>('ai.rag.p2.contextualRetrievalMaxChunks') ?? 30
+    const targets = documents.slice(0, limit)
+    this.logger.log(
+      `[P2-1] Contextual Retrieval 开启，对 ${targets.length}/${documents.length} 个 chunk 生成上下文`,
+    )
+    // 并发限制：p-limit 4 避免 LLM API 限流
+    const pLimit = (await import('p-limit')).default
+    const limitFn = pLimit(4)
+    await Promise.all(
+      targets.map((doc) =>
+        limitFn(async () => {
+          const ctx = await this.generateChunkContext(fullDocText, doc.pageContent, fileName)
+          if (ctx) {
+            // 在 metadata 里也存 ctx，便于引用预览展示
+            ;(doc.metadata as any).context = ctx
+            doc.pageContent = `<ctx>${ctx}</ctx>\n${doc.pageContent}`
+          }
+        }),
+      ),
+    )
+  }
+
   private async parseDocumentToVectorStore(
     file: Express.Multer.File,
     fileId: number,
@@ -722,6 +797,9 @@ export class RagService {
       `[P3-4 FAQ] fileId=${fileId} 生成 ${documents.length - originalDocCount} 条 FAQ 辅助 chunks`,
     )
 
+    // 【P2-1】Contextual Retrieval：给每个 chunk 加 LLM 生成的上下文注释
+    await this.applyContextualRetrieval(documents, rawText, file.originalname, false)
+
     // 🔧 先用一个 dummy 文本探测当前 embedding 模型的真实维度（1536 for embo-01）
     const probeVec = await this.embeddings.embedQuery('__dim_probe__')
     await this.ensureQdrantCollection(probeVec.length)
@@ -750,6 +828,133 @@ export class RagService {
 
 用户问题：${question}
 假设性回答：`
+  }
+
+  /**
+   * 【P2-2】Multi-Query：将用户问题改写为多个不同视角的检索查询
+   * 例：用户问"试用期多久" → ["新员工试用期时长", "劳动合同试用期规定", "公司试用期期限"]
+   * 提升长尾 query 召回率（多路 retrieve + RRF 合并）
+   */
+  private async buildMultiQueries(question: string): Promise<string[]> {
+    const count = this.configService.get<number>('ai.rag.p2.multiQueryCount') ?? 3
+    try {
+      const prompt = `你是检索查询改写助手。请将以下用户问题改写为 ${count} 个不同视角的检索查询，每个查询应：
+1. 从不同角度表达相同信息需求（如正式表述、口语表述、关键词表述）
+2. 保留核心实体（人名、产品名、术语）
+3. 长度 5-20 字
+4. 每行一个查询，不要编号
+
+用户问题：${question}
+
+直接输出 ${count} 行查询，不要其他解释。`
+      const response: any = await Promise.race([
+        this.safeLlmInvoke(prompt),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('multi-query 超时 8s')), 8000)),
+      ])
+      const text = (typeof response?.content === 'string' ? response.content : String(response?.content || '')).trim()
+      if (!text) return [question]
+      const queries = text
+        .split('\n')
+        .map((q) => q.replace(/^[\d]+[.、)]\s*/, '').trim())
+        .filter((q) => q.length > 0 && q.length <= 50)
+        .slice(0, count)
+      return queries.length > 0 ? [question, ...queries] : [question]
+    } catch (err: any) {
+      this.logger.warn(`[P2-2] multi-query 改写失败，使用原 query: ${err?.message || err}`)
+      return [question]
+    }
+  }
+
+  /**
+   * 【P3-1 CRAG】Document Grader：LLM 评估每个召回 chunk 的相关性
+   * 论文：Corrective Retrieval Augmented Generation (Yan et al. 2024)
+   *
+   * 单次 LLM 调用评估 N 个文档，输出格式：每行一个标签（RELEVANT/PARTIAL/IRRELEVANT）
+   * 比 hard check（关键词重叠率）更精准：能识别"语义相关但字面不重叠"
+   *
+   * 失败兜底：返回 null（视为全部 RELEVANT，不影响主流程）
+   */
+  private async gradeDocuments(
+    question: string,
+    documents: Document[],
+  ): Promise<('RELEVANT' | 'PARTIAL' | 'IRRELEVANT')[] | null> {
+    if (!documents.length) return null
+    try {
+      // 截断每个文档到 500 字符（节省 token）
+      const docList = documents
+        .map((d, i) => `【文档${i + 1}】\n${(d.pageContent || '').slice(0, 500)}`)
+        .join('\n\n')
+      const prompt = `你是文档相关性评估助手。请评估以下每个文档与用户问题的相关性，每个文档输出一个标签：
+
+- RELEVANT：文档直接包含问题的答案或关键信息
+- PARTIAL：文档与问题主题相关但只包含部分信息
+- IRRELEVANT：文档与问题无关或主题明显不符
+
+用户问题：${question}
+
+${docList}
+
+请按文档顺序输出 ${documents.length} 行标签，每行只输出一个标签（RELEVANT/PARTIAL/IRRELEVANT），不要其他解释。
+例如：
+RELEVANT
+PARTIAL
+IRRELEVANT
+RELEVANT`
+      const response: any = await Promise.race([
+        this.safeLlmInvoke(prompt),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('grade 超时 12s')), 12000)),
+      ])
+      const text = (typeof response?.content === 'string' ? response.content : String(response?.content || '')).trim()
+      if (!text) return null
+      // 解析每行标签
+      const labels = text
+        .split('\n')
+        .map((l) => l.trim().toUpperCase())
+        .filter((l) => l === 'RELEVANT' || l === 'PARTIAL' || l === 'IRRELEVANT')
+      if (labels.length === 0) return null
+      // 对齐长度：不足补 IRRELEVANT，过多截断
+      while (labels.length < documents.length) labels.push('IRRELEVANT')
+      return labels.slice(0, documents.length) as ('RELEVANT' | 'PARTIAL' | 'IRRELEVANT')[]
+    } catch (err: any) {
+      this.logger.warn(`[P3-1 CRAG] grade 失败（跳过）: ${err?.message || err}`)
+      return null
+    }
+  }
+
+  /**
+   * 【P2-2】多路 RRF 合并
+   * Reciprocal Rank Fusion：对每个 query 的 topK 文档按 1/(k+rank) 加权求和，取 topN
+   * @param resultLists 每路 query 的 [{doc, score}] 数组
+   * @param topN 最终返回 topN
+   * @param k RRF 参数（默认 60，Qdrant 默认）
+   */
+  private rrfFusion(
+    resultLists: { doc: Document; score: number }[][],
+    topN: number,
+    k: number = 60,
+  ): { doc: Document; score: number }[] {
+    const scoreMap = new Map<string, { doc: Document; rrf: number }>()
+    const chunkKey = (d: Document): string => {
+      const m = d.metadata as any
+      // 用 fileId + chunkIndex + 内容前 40 字符 唯一标识一个 chunk
+      return `${m?.fileId ?? '?'}-${m?.chunkIndex ?? '?'}-${(d.pageContent || '').slice(0, 40)}`
+    }
+    for (const list of resultLists) {
+      list.forEach((item, rank) => {
+        const key = chunkKey(item.doc)
+        const rrf = 1 / (k + rank + 1)
+        const existing = scoreMap.get(key)
+        if (existing) {
+          existing.rrf += rrf
+        } else {
+          scoreMap.set(key, { doc: item.doc, rrf })
+        }
+      })
+    }
+    return Array.from(scoreMap.values())
+      .sort((a, b) => b.rrf - a.rrf)
+      .slice(0, topN)
+      .map((x) => ({ doc: x.doc, score: x.rrf }))
   }
   // 📝【P3-3】LLM 文档摘要生成
   // ============================================================================
@@ -1241,6 +1446,12 @@ ${chunkText.slice(0, 1500)}`
       throw new Error('结构化文件解析后未产出可向量化文档')
     }
 
+    // 【P2-1】Contextual Retrieval：SQL 轨道用所有 sheet 的 rowContent 拼接作为全文
+    const sqlFullText = sheets
+      .map((s) => `[${s.sheetName}]\n` + s.rowObjects.map((r, i) => this.serializeRowAsNaturalLanguage(r, s.sheetName, i + 2)).join('\n'))
+      .join('\n\n')
+    await this.applyContextualRetrieval(documents, sqlFullText, originalName, true)
+
     // 🔧 先用一个 dummy 文本探测当前 embedding 模型的真实维度
     const probeVec = await this.embeddings.embedQuery('__dim_probe__')
     await this.ensureQdrantCollection(probeVec.length)
@@ -1723,6 +1934,16 @@ ${hydeText}`
         }
       }
 
+      // 【P2-2】Multi-Query：LLM 改写 → 多路 retrieve → RRF 合并
+      // 默认 off；启用时增加 1 次 LLM 调用（8s 超时），但召回率显著提升
+      const multiQueryEnabled = this.configService.get<boolean>('ai.rag.p2.multiQuery') === true
+      const queries = multiQueryEnabled
+        ? await this.buildMultiQueries(retrievalQuery)
+        : [retrievalQuery]
+      this.logger.log(
+        `[P2-2] ${multiQueryEnabled ? 'Multi-Query 开启' : 'Multi-Query 关闭'}，${queries.length} 路 query`,
+      )
+
       // 【P2-1】召回 topK=20（多召回给 rerank 留余量）
       const RECALL_TOPK = 20
       const FINAL_TOPK = 4
@@ -1730,10 +1951,25 @@ ${hydeText}`
       if (sources && sources.length > 0) {
         const effectiveFileIds = await this.expandAssetIdsToFileIds(sources, userId, isSuperAdmin)
         if (effectiveFileIds.length > 0) {
-          relevantDocs = await this.vectorSearch(retrievalQuery, effectiveFileIds, userId, RECALL_TOPK)
+          if (queries.length === 1) {
+            relevantDocs = await this.vectorSearch(queries[0], effectiveFileIds, userId, RECALL_TOPK)
+          } else {
+            // 多路并行 retrieve
+            const lists = await Promise.all(
+              queries.map((q) => this.vectorSearch(q, effectiveFileIds, userId, RECALL_TOPK)),
+            )
+            relevantDocs = this.rrfFusion(lists, RECALL_TOPK)
+          }
         }
       } else {
-        relevantDocs = await this.vectorSearch(retrievalQuery, null, userId, RECALL_TOPK)
+        if (queries.length === 1) {
+          relevantDocs = await this.vectorSearch(queries[0], null, userId, RECALL_TOPK)
+        } else {
+          const lists = await Promise.all(
+            queries.map((q) => this.vectorSearch(q, null, userId, RECALL_TOPK)),
+          )
+          relevantDocs = this.rrfFusion(lists, RECALL_TOPK)
+        }
       }
 
       // 【P2-1】cross-encoder 重排：取相关度 top FINAL_TOPK
@@ -1841,6 +2077,12 @@ ${hydeText}`
         const overlapRate = qTokens.size > 0 ? overlap / qTokens.size : 0
         // 灰度开关 ai.rag.p1.relevancyCheck (默认 true)
         const relevancyCheck = this.configService.get<boolean>('ai.rag.p1.relevancyCheck') !== false
+        // 【P2-2 DEBUG】详细打印 overlap 计算（解决 100% Refusal 误判问题）
+        if (process.env.RAG_DEBUG_QUESTION) {
+          this.logger.log(
+            `[DEBUG v5] q=${question} qTokens=${qTokens.size} sTokens=${sTokens.size} overlap=${overlap} rate=${(overlapRate * 100).toFixed(1)}% qSample=${Array.from(qTokens).slice(0, 8).join(',')}`,
+          )
+        }
         // 阈值 10%（中文 bigram 让 query tokens 数量爆炸，需要宽松；测试表明 12% 正常召回也被拒）
         if (relevancyCheck && overlapRate < 0.10 && qTokens.size >= 5) {
           this.logger.warn(
@@ -1880,6 +2122,31 @@ ${hydeText}`
           columns: doc.metadata?.columns ?? null,
         }))
         res.write(`data: ${JSON.stringify({ code: 'sources', data: citations })}\n\n`)
+
+        // 【P3-1 CRAG】用 LLM 评估每个 chunk 相关性，过滤掉 IRRELEVANT
+        // 灰度开关 ai.rag.p3.crag（默认 false）
+        if (this.configService.get<boolean>('ai.rag.p3.crag') === true) {
+          const labels = await this.gradeDocuments(
+            question,
+            relevantDocs.map((r) => r.doc),
+          )
+          if (labels && labels.length === relevantDocs.length) {
+            const before = relevantDocs.length
+            relevantDocs = relevantDocs.filter((_, i) => labels[i] !== 'IRRELEVANT')
+            this.logger.log(
+              `[P3-1 CRAG] grade 完成：${before} → ${relevantDocs.length}（过滤 ${before - relevantDocs.length} 条 IRRELEVANT）`,
+            )
+            // 过滤后为空 → 拒答（与 hard check 互补）
+            if (relevantDocs.length === 0) {
+              this.logger.warn(`[P3-1 CRAG] 过滤后无 RELEVANT chunk，触发拒答`)
+              fullAnswer = '未在已加载的参考资料中找到相关信息。'
+              res.write(
+                `data: ${JSON.stringify({ code: 200, data: fullAnswer + '\n\n' })}\n\n`,
+              )
+              return
+            }
+          }
+        }
 
         // 【P1-3】SQL 轨道走"行级上下文"格式，长文本维持原样
         // 关键升级：SQL 轨道除了 pageContent，还把 rowIndices + columns 结构化元信息塞进 prompt

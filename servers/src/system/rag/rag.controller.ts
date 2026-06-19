@@ -14,7 +14,6 @@ import {
   UploadedFile,
   UseInterceptors,
   ParseIntPipe,
-  Logger,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { FileInterceptor } from '@nestjs/platform-express'
@@ -41,7 +40,6 @@ import { RAG_ETL_QUEUE_NAME, RAG_ETL_JOB_RUN, RagEtlJobData } from './rag-etl.co
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(AuditInterceptor) // 【P0-3】RAG 模块所有 endpoint 自动审计
 export class RagController {
-  private readonly logger = new Logger(RagController.name)
   // 上传根目录用模块顶层 RAG_UPLOAD_DIR 常量（@UseInterceptors 装饰器先于构造函数求值，必须顶层可用）
   private readonly serveRoot: string
   private readonly fileDomain: string

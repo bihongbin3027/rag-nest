@@ -76,7 +76,7 @@ ai:
     collectionName: "rag_demo_collection"  # 统一管理的非结构化向量空间名称
   # 【P0-5】Rerank 模型配置（输入截断字符预算，默认 1024）
   rerank:
-    charBudget: 1024                       # 旧硬编码 512 对中文偏短，BGE-base 512 token 上下文仅用了 ~80%
+    charBudget: 1500                       # 【优化1】v2-m3 context=8192 token，1500 字符≈~750 token
   # 【P0】RAG 灰度开关（默认 false 保留旧行为，开启切到新逻辑）
   rag:
     p0:
@@ -87,11 +87,29 @@ ai:
       pdfWithPage: true                    # PDF 按页保留
     p1:
       hybrid: false                        # Qdrant sparse + RRF 混合检索（需 Qdrant 1.10+）
-      historyInRetrieval: false            # 多轮历史参与 embedding 检索
-      rerankModel: 'Xenova/bge-reranker-base'  # P1-2 升级到 'BAAI/bge-reranker-v2-m3'
+      historyInRetrieval: true            # 多轮历史参与 embedding 检索
+      rerankModel: 'Xenova/bge-reranker-base'  # base（v2-m3 与 transformers.js text-classification 不兼容，需要 NLI pair）
     # 【P1-7】Chunk 大小配置（中文 RAG 经验值：800/150 比 600/100 召回率 +5%）
     chunk:
       vectorSize: 800
       vectorOverlap: 150
       sqlSize: 1000
       sqlOverlap: 100
+    # 【P2-1】Contextual Retrieval（Anthropic 2024）
+    #   - true: ETL 阶段给每个 chunk 加 LLM 生成的 50-100 token 上下文注释
+    #   - 论文报告可降 49% 检索失败；加 rerank 后 67%
+    #   - 成本：每 chunk 一次 LLM 调用 → ETL 慢 5-10x
+    #   - 默认 false（避免现有文件需要重新 ETL）
+    p2:
+      contextualRetrieval: true           # 验证后在小数据集(30行)上效果不佳，默认关闭
+      contextualRetrievalMaxChunks: 30     # 限制最大 chunk 数（避免 LLM API 限流）
+      # 【P2-2】Multi-Query：用户问"试用期多久" → LLM 改写 3 个视角 → 各自 retrieve → RRF
+      multiQuery: true                     # 验证后效果不佳，默认关闭
+      multiQueryCount: 3                   # 改写 query 数量
+    # 【P3-1】CRAG：Corrective Retrieval Augmented Generation（Yan 2024）
+    #   - 检索后用 LLM 给每个 chunk 打分 RELEVANT/PARTIAL/IRRELEVANT
+    #   - 过滤掉 IRRELEVANT，过滤后为空 → 拒答
+    #   - 1 次 LLM 调用评估 N 个文档（成本可控）
+    #   - 比 hard check（关键词重叠率）更精准
+    p3:
+      crag: true                          # 【P3-1 默认关闭】CRAG document grader（已验证可工作，效果需更大数据集）
