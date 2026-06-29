@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>nest-admin · RAG 知识库全链路流程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --paper: #ffffff;
+    --ink: #14171e;
+    --ink-2: #3a4256;
+    --muted: #7c7a72;
+    --line: #e9e3d6;
+    --line-soft: #f0ebde;
+    --primary: #2f6f5e;          /* 深绿主色 */
+    --primary-soft: #e3efe9;
+    --accent: #c97b3f;           /* 暖橙辅色 */
+    --accent-soft: #f4e8d8;
+    --danger: #b06367;
+    --sql: #4a6da8;              /* SQL 轨蓝 */
+    --vector: #2f6f5e;           /* VECTOR 轨绿 */
+    --llm: #c97b3f;              /* LLM 橙 */
+    --db: #6b5b95;               /* DB 紫 */
+    --qdrant: #c0392b;           /* Qdrant 红 */
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: 'Outfit', system-ui, sans-serif; font-size: 15px; line-height: 1.6; }
+  body { background-image: radial-gradient(ellipse at 8% 0%, rgba(47,111,94,0.06), transparent 45%), radial-gradient(ellipse at 92% 30%, rgba(201,123,63,0.05), transparent 50%); min-height: 100vh; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 56px 32px 96px; }
+
+  /* ====== Header ====== */
+  header.hero { margin-bottom: 64px; padding-bottom: 32px; border-bottom: 1px solid var(--line); }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary); font-weight: 600; padding: 6px 12px; background: var(--primary-soft); border-radius: 999px; }
+  h1 { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: 44px; line-height: 1.15; margin: 24px 0 18px; letter-spacing: -0.01em; color: var(--ink); }
+  h1 em { color: var(--primary); font-style: normal; }
+  .lede { font-size: 17px; color: var(--ink-2); max-width: 760px; line-height: 1.65; }
+  .meta { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 28px; font-size: 13px; color: var(--muted); }
+  .meta span { display: inline-flex; align-items: center; gap: 6px; }
+  .meta svg { width: 14px; height: 14px; }
+
+  /* ====== Section ====== */
+  section { margin-bottom: 88px; }
+  .section-head { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 28px; }
+  .section-num { font-family: 'DM Serif Display', serif; font-size: 40px; line-height: 1; color: var(--primary); opacity: 0.55; flex-shrink: 0; }
+  .section-head h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 30px; line-height: 1.2; margin: 0 0 6px; color: var(--ink); letter-spacing: -0.005em; }
+  .section-head p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  /* ====== Mermaid Container ====== */
+  .mermaid-block { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 28px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); overflow-x: auto; }
+  .mermaid { font-family: 'Outfit', sans-serif !important; font-size: 13px !important; }
+  .mermaid svg { max-width: 100%; height: auto; }
+
+  /* ====== Legend ====== */
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 18px; padding: 14px 18px; background: var(--line-soft); border-radius: 10px; font-size: 13px; }
+  .legend-item { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); }
+  .swatch { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.06); }
+
+  /* ====== Notes Grid ====== */
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 24px; }
+  .note { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .note-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+  .note h4 { font-size: 15px; margin: 0 0 8px; color: var(--ink); font-weight: 600; }
+  .note p { margin: 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+  .note code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--line-soft); padding: 1px 6px; border-radius: 4px; color: var(--primary); }
+
+  /* ====== Code reference ====== */
+  .ref-table { width: 100%; border-collapse: collapse; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font-size: 13.5px; }
+  .ref-table th, .ref-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--line); }
+  .ref-table th { background: var(--line-soft); font-weight: 600; color: var(--ink-2); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .ref-table tr:last-child td { border-bottom: 0; }
+  .ref-table td code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--primary); }
+
+  /* ====== Footer ====== */
+  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; text-align: center; }
+
+  /* Mobile */
+  @media (max-width: 720px) {
+    .wrap { padding: 32px 18px 64px; }
+    h1 { font-size: 32px; }
+    .section-head h2 { font-size: 24px; }
+    .section-num { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="eyebrow">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    NEST-ADMIN · RAG 知识库
+  </span>
+  <h1>从资源文件到向量入库,<br/>再到<em>流式问答</em>的完整链路</h1>
+  <p class="lede">本文档梳理 nest-admin RAG 模块的两条核心后端链路:文件上传 → 解析 → 存入向量数据库;以及用户提问 → 检索增强 → 流式回答。聚焦控制流、数据流、关键组件与可观测性点。</p>
+  <div class="meta">
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      文档版本 · 2026-06
+    </span>
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      NestJS 11 · BullMQ · Qdrant · MiniMax LLM
+    </span>
+    <span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      ETL 异步执行 · 问答 SSE 流式
+    </span>
+  </div>
+</header>
+
+<!-- ===================================================== -->
+<!-- 流程 1: 上传 → 解析 → 入向量库                          -->
+<!-- ===================================================== -->
+<section>
+  <div class="section-head">
+    <div class="section-num">01</div>
+    <div>
+      <h2>资源文件上传 → 解析 → 向量数据库</h2>
+      <p>HTTP 同步落盘 + DB 登记 → 立即返回 → BullMQ 异步 ETL → 双轨解析 → Qdrant 入库</p>
+    </div>
+  </div>
+
+  <div class="mermaid-block">
+<pre class="mermaid">
+flowchart TD
+  Start([用户在前端选文件<br/>POST /api/rag/file/upload]) --> Guard{JwtAuthGuard<br/>是否登录?}
+  Guard -->|否| R401[401 未识别到用户]
+  Guard -->|是| Multer
+
+  Multer[multer.diskStorage<br/>拦截器 FileInterceptor]
+  Multer --> Filter{扩展名白名单?<br/>txt md pdf docx xlsx xls csv}
+  Filter -->|否| R400[400 文件类型不支持]
+  Filter -->|是| Size{文件大小 ≤ 50MB?}
+  Size -->|否| R400Size[400 文件超限]
+  Size -->|是| Disk[写入磁盘 RAG_UPLOAD_DIR<br/>latin1→utf8 修复中文文件名]
+
+  Disk --> Service[RagService.registerPhysicalFile]
+  Service --> Judge{扩展名判定 ragTrack}
+  Judge -->|xlsx xls csv| SQLTrack[ragTrack = SQL]
+  Judge -->|txt md pdf docx| VecTrack[ragTrack = VECTOR]
+  SQLTrack --> Insert[INSERT RagFileEntity<br/>vectorStatus = PROCESSING<br/>size fileUrl fileType userId]
+  VecTrack --> Insert
+
+  Insert --> Enqueue[BullMQ Queue<br/>queue.add RAG_ETL_JOB_RUN<br/>payload: filePath fileId userId originalName]
+  Enqueue --> Respond[HTTP 200 立即返回<br/>文件接收成功,异步清洗任务已激活]
+
+  Enqueue -.异步.-> Worker[RagFileProcessor Worker<br/>concurrency=3<br/>lockDuration=5min<br/>attempts=3 指数退避 2s→4s→8s]
+  Worker --> ETL[RagService.runEtlJob]
+  ETL --> Read[fs.readFile 读磁盘 → buffer<br/>stat 取 mtime + sha256]
+  Read --> Route{根据 ragTrack 分流}
+
+  Route -->|VECTOR| ParseVec[parseDocumentToVectorStore]
+  Route -->|SQL| ParseSQL[parseStructuredToVectorStore]
+
+  subgraph VECTOR [VECTOR 轨道 · 长文本]
+    ParseVec --> Ext{扩展名分支}
+    Ext -->|txt/md| ReadTxt[buffer.toString utf-8]
+    Ext -->|pdf| ReadPdf[pdf-parse<br/>按页用 \f 分隔<br/>重组 加【第 N 页】前缀]
+    Ext -->|docx| ReadDocx[mammoth.extractRawText]
+    ReadTxt --> PreMd{md?}
+    ReadPdf --> PreMd
+    ReadDocx --> PreMd
+    PreMd -->|是| MdPre[preprocessMarkdownTables<br/>表格结构化预处理]
+    PreMd -->|否| Split
+    MdPre --> Split[RecursiveCharacterTextSplitter<br/>md 用 markdown 结构分隔符<br/>其余默认 800/150]
+    Split --> Chunks[生成 chunks<br/>metadata: fileId fileName chunkIndex userId<br/>PDF 额外 pageNumber]
+    Chunks --> Summary[generateDocumentSummary<br/>LLM 整文档摘要<br/>写入首条 chunkType=summary]
+    Summary --> FAQ[generateChunkFAQs<br/>每 chunk 生成 3-5 个 FAQ<br/>最多 5 个 chunkType=faq]
+    FAQ --> CtxRet[applyContextualRetrieval 灰度<br/>每 chunk 加 LLM 上下文注释]
+    CtxRet --> Probe[embedQuery __dim_probe__<br/>探测向量维度]
+    Probe --> Ensure[ensureQdrantCollection<br/>不存在→建 dim 不匹配→删重建]
+    Ensure --> WriteVec[QdrantVectorStore.fromDocuments<br/>dense embedding + 内部 sparse<br/>写入 Qdrant]
+  end
+
+  subgraph SQL [SQL 轨道 · 结构化表格]
+    ParseSQL --> ExDet[detectHeaderRow<br/>自动探测真表头行]
+    ExDet --> ExRead{扩展名}
+    ExRead -->|xlsx/xls| ExcelJS[ExcelJS.parseExcelRows<br/>提取每个 sheet]
+    ExRead -->|csv| CSV[parseCsvRows]
+    ExcelJS --> Serialize
+    CSV --> Serialize[serializeRowAsNaturalLanguage<br/>每行转 【Sheet】第N行: 列=值 字符串]
+    Serialize --> SheetSum[generateSheetSummary<br/>LLM sheet 全局摘要]
+    SheetSum --> RowChunk[每行 1 chunk<br/>超长用 splitter 兜底切<br/>metadata: sheetName columns rowIndices headerRow]
+    RowChunk --> SqlFAQ[行级 FAQ<br/>最多 5 条 chunkType=faq]
+    SqlFAQ --> SqlCtx[applyContextualRetrieval<br/>SQL 全文本拼接]
+    SqlCtx --> SqlProbe[embedQuery 探维度]
+    SqlProbe --> SqlEnsure[ensureQdrantCollection]
+    SqlEnsure --> WriteSql[QdrantVectorStore.fromDocuments<br/>dense + sparse 入 Qdrant]
+  end
+
+  WriteVec --> Persist[UPDATE RagFileEntity<br/>vectorStatus = SUCCESS<br/>contentHash fileMtime headerRow]
+  WriteSql --> Persist
+
+  Persist --> Metric[Prometheus recordEtlComplete<br/>记录 ETL 耗时]
+  Metric --> Done([任务完成])
+
+  Persist -.失败兜底.-> Fail[UPDATE vectorStatus = FAILED<br/>errorMessage = msg + 堆栈前 3 行]
+  Fail --> Metric
+</pre>
+  </div>
+
+  <div class="legend">
+    <span class="legend-item"><span class="swatch" style="background: var(--primary);"></span>主流程</span>
+    <span class="legend-item"><span class="swatch" style="background: var(--vector);"></span>VECTOR 轨</span>
+    <span class="legend-item"><span class="swatch" style="background: var(--sql);"></span>SQL 轨</span>
+    <span class="legend-item"><span class="swatch" style="background: var(--accent);"></span>LLM 调用</span>
+    <span class="legend-item"><span class="swatch" style="background: var(--qdrant);"></span>Qdrant 操作</span>
+    <span class="legend-item"><span class="swatch" style="background: var(--db);"></span>数据库</span>
+    <span class="legend-item"><span class="swatch" style="background: var(--danger);"></span>错误兜底</span>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <div class="note-label">关键技术</div>
+      <h4>异步 ETL · BullMQ</h4>
+      <p><code>concurrency=3</code> 控制并发,<code>lockDuration=5min</code> + <code>stalledInterval=1min</code> 显式拉大,避免 Windows + onnxruntime 启动慢导致 stalled 误判。失败 <code>attempts=3</code>,指数退避 <code>2s→4s→8s</code>。</p>
+    </div>
+    <div class="note">
+      <div class="note-label">双轨制</div>
+      <h4>ragTrack 路由</h4>
+      <p><code>xlsx/xls/csv</code> 走 SQL 轨 — 每行一个 chunk,metadata 携带 sheetName/columns/rowIndices,引用可精准到行级;其他格式走 VECTOR 轨 — 文本切片 + embedding。</p>
+    </div>
+    <div class="note">
+      <div class="note-label">检索增强</div>
+      <h4>Summary + FAQ + Ctx</h4>
+      <p>ETL 阶段为文档额外生成三类辅助 chunk:<code>summary</code>(整文档摘要)、<code>faq</code>(每段 3-5 个可能问题)、<code>ctx</code>(灰度,Anthropic Contextual Retrieval),召回率提升 49%-67%。</p>
+    </div>
+    <div class="note">
+      <div class="note-label">可观测性</div>
+      <h4>Prometheus 埋点</h4>
+      <p>ETL 完成时 <code>recordEtlComplete</code> 上报耗时;embedding/llm 熔断状态变化通过 <code>onStateChange</code> 上报 <code>rag_circuit_breaker_state</code> gauge,生产排障先看 <code>/metrics</code>。</p>
+    </div>
+    <div class="note">
+      <div class="note-label">可靠性</div>
+      <h4>限流 + 熔断</h4>
+      <p>所有 embedding 调用走 <code>limitAndBreaker</code>:<code>p-limit(5)</code> 限流 + <code>opossum</code> 熔断(错误率 > 50% 触发 30s 短路)。LLM 独立熔断,参数 <code>p-limit(8)</code>、<code>timeout=60s</code>。</p>
+    </div>
+    <div class="note">
+      <div class="note-label">中文兼容</div>
+      <h4>文件名 latin1→utf8</h4>
+      <p>multer 2.x 永远按 latin1 解析 multipart 头里的 UTF-8 字节流,controller + service 双层反向解码 <code>Buffer.from(raw,'latin1').toString('utf8')</code>,否则中文文件名存储即乱码。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== -->
+<!-- 流程 2: 提问 → 流式回答                                  -->
+<!-- ===================================================== -->
+<section>
+  <div class="section-head">
+    <div class="section-num">02</div>
+    <div>
+      <h2>用户提问 → 流式回答后端处理</h2>
+      <p>SSE 持久连接 → 会话管理 → 多轮上下文 → 检索增强(改写+重排+相关性)→ LLM 流式生成 → 引用校验 → 会话持久化</p>
+    </div>
+  </div>
+
+  <div class="mermaid-block">
+<pre class="mermaid">
+flowchart TD
+  Start([前端 POST /api/rag/ask-stream<br/>body: question sessionId? sources?]) --> Guard{JwtAuthGuard}
+  Guard -->|失败| R401[401]
+  Guard -->|通过| SetSSE[设置 SSE 响应头<br/>Content-Type: text/event-stream<br/>AbortController 监听 res.on close/error]
+  SetSSE --> Exec[executeDualTrackQuery]
+  Exec --> Sess{有 sessionId?}
+  Sess -->|否| NewSess[createSession<br/>title = question.slice 0 24]
+  Sess -->|是| LoadSess[getOwnedSession<br/>归属校验]
+  LoadSess -->|无权| R403[403 会话不存在或无权访问]
+  LoadSess -->|通过| PushSess
+  NewSess --> PushSess[SSE 第一帧 code:session<br/>推送新会话 id 和 title]
+  PushSess --> History[buildHistoryContext<br/>拉最近 6 轮对话]
+
+  History --> Notify[SSSE 推送 code:200<br/>正在检索关联知识库资产]
+  Notify --> Hyde[HyDE LLM 生成假设性回答<br/>拼接到原 query 后]
+  Hyde -->|灰度| MQ[Multi-Query LLM 改写<br/>生成 N 个不同视角查询]
+  HyDE --> MQ2
+  MQ --> Expand{有 sources?}
+  MQ2 --> Expand
+
+  Expand -->|有| BFS[expandAssetIdsToFileIds<br/>BFS 展开文件夹 → 纯文件 id<br/>userId 隔离]
+  Expand -->|无| Search
+  BFS --> Search[vectorSearch topK=20]
+
+  subgraph RETRIEVE [检索阶段]
+    Search --> Emb[embedQuery 限流+熔断<br/>生成 dense 向量]
+    Emb --> Hybrid{ai.rag.p1.hybrid?}
+    Hybrid -->|是| Qdrant[QdrantHybridProvider<br/>dense + sparse BM25 prefetch<br/>Qdrant 原生 RRF 融合]
+    Hybrid -->|否| Dense[QdrantVectorStore<br/>similaritySearchWithScore<br/>dense-only]
+    Qdrant --> Filter
+    Dense --> Filter[filter: metadata.userId = userId<br/>+ metadata.fileId IN list]
+    Filter --> MultiRoute{多路 query?}
+    MultiRoute -->|是| RRF[本地 rrfFusion 合并]
+    MultiRoute -->|否| Recalled[recall = 20]
+    RRF --> Recalled
+  end
+
+  Recalled --> NeedRerank{recall > 4?}
+  NeedRerank -->|是| DropFAQ1[剔除 chunkType=faq]
+  DropFAQ1 --> Rerank[RerankProvider cross-encoder<br/>rerank question candidates topN=4]
+  Rerank --> Fill{rerank 输出够 4?}
+  Fill -->|否| Fallback[用原始 recall 顺序补]
+  Fill -->|是| Top4
+  Fallback --> Top4[截到 top-4]
+  NeedRerank -->|否| Top4
+
+  Top4 --> DropFAQ2[再次过滤 FAQ 兜底]
+  DropFAQ2 --> Empty{top-4 为空?}
+  Empty -->|是| Refuse[拒答<br/>未在已加载的参考资料中找到相关信息<br/>占位 citations fileId=-1]
+  Empty -->|否| HardCheck[相关性 hard check<br/>中英 bigram 重叠率 &lt; 5% qTokens≥10<br/>触发拒答]
+
+  HardCheck -->|拒答| Refuse
+  HardCheck -->|通过| CRAG{ai.rag.p3.crag?}
+  CRAG -->|是| Grade[gradeDocuments<br/>LLM 评 RELEVANT PARTIAL IRRELEVANT<br/>过滤 IRRELEVANT]
+  CRAG -->|否| Cite
+  Grade --> Cite[构造 CitationDto 数组<br/>fileId fileName chunkIndex score<br/>SQL 轨道含 sheetName columns rowIndices]
+  Refuse --> CiteRefuse[推送占位 citations]
+
+  Cite --> CtxBuild{有 SQL 轨道?}
+  CtxBuild -->|是| CtxSql[contextText = 行级格式<br/>【表格行级参考 fileName/sheetName】<br/>列名 行号列表 行级数据]
+  CtxBuild -->|否| CtxVec[contextText = 文本格式<br/>【参考源 fileName】pageContent]
+  CtxSql --> Prompt
+  CtxVec --> Prompt[构造 systemPrompt<br/>SQL 轨:行级计算规范<br/>VECTOR 轨:通用严谨 RAG 规则]
+  CiteRefuse --> Done
+  Prompt --> Notify2[推送 code:200<br/>已定位到行级数据 / 已为您提炼关联企业物料]
+  Notify2 --> LLMStream[streamLlmWithHistory]
+
+  subgraph LLMSTAGE [LLM 流式生成阶段]
+    LLMStream --> BuildMsg[messages = system + history×N + human question]
+    BuildMsg --> LLMCall[ChatOpenAI.stream messages signal<br/>限流+熔断 concurrency=8 timeout=60s]
+    LLMCall --> Loop{for await chunk}
+    Loop -->|aborted| Break[break 已累积字符写入 partial]
+    Loop -->|正常| WriteSSE[res.write data frame<br/>JSON code:200 data:content<br/>full += content]
+    WriteSSE --> Loop
+    Break --> Sanitize[sanitizeCitationMarkers<br/>校验 n 角标不越界<br/>越界替换为 ?]
+  end
+
+  Sanitize --> CitePush[推送 code:sources + citations]
+  CitePush --> Persist[appendTurn 持久化<br/>INSERT RagMessageEntity × 2 user + assistant<br/>UPDATE RagSessionEntity updatedAt]
+
+  Persist --> EndSSE[controller finally<br/>推送 code:ok stream_ended<br/>res.end]
+  EndSSE --> Done([用户看到流式回答 + 引用卡片])
+
+  SetSSE -.客户端断开.-> Abort[res.on close 触发 ac.abort<br/>LLM stream 立刻 break<br/>停止烧 token]
+  Abort -.持久化降级.-> PersistAbort[仅持久化 user 消息<br/>assistant 不存避免空气泡]
+</pre>
+  </div>
+
+  <div class="legend">
+    <span class="legend-item"><span class="swatch" style="background: var(--primary);"></span>SSE 流</span>
+    <span class="legend-item"><span class="swatch" style="background: var(--llm);"></span>LLM 调用</span>
+    <span class="legend-item"><span class="swatch" style="background: var(--qdrant);"></span>Qdrant 检索</span>
+    <span class="legend-item"><span class="swatch" style="background: var(--db);"></span>数据库</span>
+    <span class="legend-item"><span class="swatch" style="background: var(--danger);"></span>拒答 / 熔断</span>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <div class="note-label">检索增强</div>
+      <h4>HyDE + Multi-Query</h4>
+      <p>HyDE 让 LLM 生成"假设性回答"拼接检索 query,提升召回;<code>ai.rag.p2.multiQuery</code> 灰度开启多路改写,每路独立检索后本地 <code>rrfFusion(k=60)</code> 合并。</p>
+    </div>
+    <div class="note">
+      <div class="note-label">检索精排</div>
+      <h4>BM25+Dense+RRF+Rerank</h4>
+      <p>Qdrant 原生 hybrid(<code>ai.rag.p1.hybrid</code> 灰度)用 sparse prefetch + RRF;默认 dense-only。召回 20 → cross-encoder rerank 截到 4,rerank 不足时用 raw recall 顺序补。</p>
+    </div>
+    <div class="note">
+      <div class="note-label">幻觉防护</div>
+      <h4>两道拒答闸</h4>
+      <p>① hard check:query 与 sources 关键词 bigram 重叠率 &lt;5% 且 token 数 ≥10 触发拒答;<code>ai.rag.p3.crag</code> 灰度开启 LLM 评估 IRRELEVANT 过滤。两道闸都阻断"LLM 看到无关内容强行编"。</p>
+    </div>
+    <div class="note">
+      <div class="note-label">成本控制</div>
+      <h4>客户端断开即停</h4>
+      <p><code>res.on('close')</code> 触发 <code>AbortController</code>,LangChain stream 内部检测到 abort 立即 break;<code>for await</code> 循环内同时检查 <code>signal.aborted</code> 兜底。不让 LLM 继续生成用户看不到的 token。</p>
+    </div>
+    <div class="note">
+      <div class="note-label">多轮记忆</div>
+      <h4>历史拼装 + 灰度检索</h4>
+      <p><code>buildHistoryContext(6)</code> 拉最近 6 轮 messages 直接喂 LLM;<code>ai.rag.p1.historyInRetrieval</code> 灰度开启时把上一轮用户问题拼接到检索 query,解决"上面那个制度的第三条"指代问题。</p>
+    </div>
+    <div class="note">
+      <div class="note-label">双轨引用</div>
+      <h4>CitationDto 行级定位</h4>
+      <p>SQL 轨道 metadata 携带 <code>sheetName/columns/rowIndices</code>,前端能精准定位到具体单元格;VECTOR 轨道仅 chunkIndex。LLM 生成时强制 <code>[n]</code> 角标引用,<code>sanitizeCitationMarkers</code> 兜底越界替换。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== -->
+<!-- 关键文件参考                                          -->
+<!-- ===================================================== -->
+<section>
+  <div class="section-head">
+    <div class="section-num">03</div>
+    <div>
+      <h2>关键源码定位</h2>
+      <p>所有流程对应的文件入口,便于二次排查</p>
+    </div>
+  </div>
+
+  <table class="ref-table">
+    <thead>
+      <tr>
+        <th>文件</th>
+        <th>关键函数 / 装饰器</th>
+        <th>职责</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>rag.controller.ts</code></td>
+        <td><code>@Post file/upload</code> / <code>askStream</code></td>
+        <td>HTTP 入口 + SSE 流式响应包装</td>
+      </tr>
+      <tr>
+        <td><code>rag-etl.processor.ts</code></td>
+        <td><code>@Processor rag-etl</code></td>
+        <td>BullMQ Worker,消费 ETL 任务</td>
+      </tr>
+      <tr>
+        <td><code>rag-etl.constants.ts</code></td>
+        <td><code>RAG_ETL_QUEUE_NAME</code></td>
+        <td>队列名 + Job payload 类型定义</td>
+      </tr>
+      <tr>
+        <td><code>rag.service.ts</code></td>
+        <td><code>runEtlJob</code> / <code>executeDualTrackQuery</code> / <code>vectorSearch</code></td>
+        <td>ETL 核心 + 双轨检索 + 流式问答编排</td>
+      </tr>
+      <tr>
+        <td><code>qdrant-hybrid.provider.ts</code></td>
+        <td><code>hybridSearch</code></td>
+        <td>Qdrant dense + sparse prefetch + RRF 混合检索</td>
+      </tr>
+      <tr>
+        <td><code>rerank.provider.ts</code></td>
+        <td><code>rerank</code></td>
+        <td>Cross-encoder 重排(cross-encoder/ms-marco-MiniLM)</td>
+      </tr>
+      <tr>
+        <td><code>parse-header.util.ts</code></td>
+        <td><code>detectHeaderRow</code></td>
+        <td>Excel 表头自动检测 + 表格预处理</td>
+      </tr>
+      <tr>
+        <td><code>circuit-breaker.util.ts</code></td>
+        <td><code>limitAndBreaker</code></td>
+        <td>LLM / embedding 统一限流熔断(p-limit + opossum)</td>
+      </tr>
+      <tr>
+        <td><code>common/metrics/rag-metrics.service.ts</code></td>
+        <td><code>recordEtlComplete</code> / <code>recordVectorSearch</code></td>
+        <td>Prometheus 业务指标埋点</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  nest-admin · RAG 流程梳理 · 基于 2026-06 仓库代码 · 配色灵感来自 Notion + Linear
+</footer>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis', padding: 12 },
+    themeVariables: {
+      fontFamily: "'Outfit', system-ui, sans-serif",
+      fontSize: '13px',
+      primaryColor: '#ffffff',
+      primaryTextColor: '#14171e',
+      primaryBorderColor: '#2f6f5e',
+      lineColor: '#3a4256',
+      secondaryColor: '#f7f5f0',
+      tertiaryColor: '#fafafa',
+      background: '#ffffff',
+      clusterBkg: '#faf8f1',
+      clusterBorder: '#e9e3d6',
+      edgeLabelBackground: '#ffffff'
+    }
+  });
+</script>
+</body>
+</html>
