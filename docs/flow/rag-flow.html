@@ -17,73 +17,82 @@
     --muted: #7c7a72;
     --line: #e9e3d6;
     --line-soft: #f0ebde;
-    --primary: #2f6f5e;          /* 深绿主色 */
+    --primary: #2f6f5e;
     --primary-soft: #e3efe9;
-    --accent: #c97b3f;           /* 暖橙辅色 */
+    --accent: #c97b3f;
     --accent-soft: #f4e8d8;
     --danger: #b06367;
-    --sql: #4a6da8;              /* SQL 轨蓝 */
-    --vector: #2f6f5e;           /* VECTOR 轨绿 */
-    --llm: #c97b3f;              /* LLM 橙 */
-    --db: #6b5b95;               /* DB 紫 */
-    --qdrant: #c0392b;           /* Qdrant 红 */
+    --sql: #4a6da8;
+    --vector: #2f6f5e;
+    --llm: #c97b3f;
+    --db: #6b5b95;
+    --qdrant: #c0392b;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: 'Outfit', system-ui, sans-serif; font-size: 15px; line-height: 1.6; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: 'Outfit', system-ui, sans-serif; font-size: 16px; line-height: 1.65; }
   body { background-image: radial-gradient(ellipse at 8% 0%, rgba(47,111,94,0.06), transparent 45%), radial-gradient(ellipse at 92% 30%, rgba(201,123,63,0.05), transparent 50%); min-height: 100vh; }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 56px 32px 96px; }
+  .wrap { max-width: 1480px; margin: 0 auto; padding: 48px 32px 96px; }
 
   /* ====== Header ====== */
-  header.hero { margin-bottom: 64px; padding-bottom: 32px; border-bottom: 1px solid var(--line); }
-  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary); font-weight: 600; padding: 6px 12px; background: var(--primary-soft); border-radius: 999px; }
-  h1 { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: 44px; line-height: 1.15; margin: 24px 0 18px; letter-spacing: -0.01em; color: var(--ink); }
+  header.hero { margin-bottom: 48px; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary); font-weight: 600; padding: 6px 12px; background: var(--primary-soft); border-radius: 999px; }
+  h1 { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: 48px; line-height: 1.15; margin: 22px 0 16px; letter-spacing: -0.01em; color: var(--ink); }
   h1 em { color: var(--primary); font-style: normal; }
-  .lede { font-size: 17px; color: var(--ink-2); max-width: 760px; line-height: 1.65; }
-  .meta { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 28px; font-size: 13px; color: var(--muted); }
+  .lede { font-size: 18px; color: var(--ink-2); max-width: 880px; line-height: 1.65; }
+  .meta { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 24px; font-size: 14px; color: var(--muted); }
   .meta span { display: inline-flex; align-items: center; gap: 6px; }
-  .meta svg { width: 14px; height: 14px; }
+  .meta svg { width: 16px; height: 16px; }
 
   /* ====== Section ====== */
-  section { margin-bottom: 88px; }
-  .section-head { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 28px; }
-  .section-num { font-family: 'DM Serif Display', serif; font-size: 40px; line-height: 1; color: var(--primary); opacity: 0.55; flex-shrink: 0; }
-  .section-head h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 30px; line-height: 1.2; margin: 0 0 6px; color: var(--ink); letter-spacing: -0.005em; }
-  .section-head p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 72px; }
+  .section-head { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 24px; }
+  .section-num { font-family: 'DM Serif Display', serif; font-size: 44px; line-height: 1; color: var(--primary); opacity: 0.55; flex-shrink: 0; }
+  .section-head h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 34px; line-height: 1.2; margin: 0 0 6px; color: var(--ink); letter-spacing: -0.005em; }
+  .section-head p { margin: 0; color: var(--muted); font-size: 15px; }
 
-  /* ====== Mermaid Container ====== */
-  .mermaid-block { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 28px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); overflow-x: auto; }
-  .mermaid { font-family: 'Outfit', sans-serif !important; font-size: 13px !important; }
-  .mermaid svg { max-width: 100%; height: auto; }
+  /* ====== Mermaid Container with Zoom ====== */
+  .mermaid-block { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.03); position: relative; overflow: hidden; }
+  .mermaid-toolbar { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--line-soft); }
+  .toolbar-label { font-size: 13px; color: var(--muted); margin-right: 8px; font-weight: 500; }
+  .toolbar-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 13px; color: var(--ink-2); cursor: pointer; transition: all 0.15s; }
+  .toolbar-btn:hover { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+  .toolbar-btn svg { width: 14px; height: 14px; }
+  .zoom-info { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--muted); padding: 4px 10px; background: var(--paper); border-radius: 6px; border: 1px solid var(--line); }
+  .mermaid-stage { overflow: auto; padding: 32px 24px; min-height: 200px; cursor: grab; }
+  .mermaid-stage:active { cursor: grabbing; }
+  .mermaid-stage > div { transform-origin: 0 0; transition: transform 0.05s linear; }
+  .mermaid { font-family: 'Outfit', sans-serif !important; }
+  .mermaid svg { display: block; }
 
   /* ====== Legend ====== */
-  .legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 18px; padding: 14px 18px; background: var(--line-soft); border-radius: 10px; font-size: 13px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; padding: 14px 18px; background: var(--line-soft); border-radius: 10px; font-size: 14px; }
   .legend-item { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); }
   .swatch { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.06); }
 
   /* ====== Notes Grid ====== */
-  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 24px; }
-  .note { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 24px; }
+  .note { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; }
   .note-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
-  .note h4 { font-size: 15px; margin: 0 0 8px; color: var(--ink); font-weight: 600; }
-  .note p { margin: 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
-  .note code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--line-soft); padding: 1px 6px; border-radius: 4px; color: var(--primary); }
+  .note h4 { font-size: 16px; margin: 0 0 8px; color: var(--ink); font-weight: 600; }
+  .note p { margin: 0; font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+  .note code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--line-soft); padding: 1px 6px; border-radius: 4px; color: var(--primary); }
 
   /* ====== Code reference ====== */
-  .ref-table { width: 100%; border-collapse: collapse; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font-size: 13.5px; }
-  .ref-table th, .ref-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--line); }
+  .ref-table { width: 100%; border-collapse: collapse; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font-size: 14px; }
+  .ref-table th, .ref-table td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--line); }
   .ref-table th { background: var(--line-soft); font-weight: 600; color: var(--ink-2); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
   .ref-table tr:last-child td { border-bottom: 0; }
-  .ref-table td code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--primary); }
+  .ref-table td code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--primary); }
 
   /* ====== Footer ====== */
-  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; text-align: center; }
+  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; text-align: center; }
 
   /* Mobile */
   @media (max-width: 720px) {
     .wrap { padding: 32px 18px 64px; }
-    h1 { font-size: 32px; }
-    .section-head h2 { font-size: 24px; }
-    .section-num { font-size: 30px; }
+    h1 { font-size: 34px; }
+    .section-head h2 { font-size: 26px; }
+    .section-num { font-size: 34px; }
   }
 </style>
 </head>
@@ -126,82 +135,101 @@
   </div>
 
   <div class="mermaid-block">
-<pre class="mermaid">
+    <div class="mermaid-toolbar">
+      <span class="toolbar-label">流程图 1</span>
+      <button class="toolbar-btn" data-zoom="in" data-target="m1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>
+        放大
+      </button>
+      <button class="toolbar-btn" data-zoom="out" data-target="m1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M8 11h6"/></svg>
+        缩小
+      </button>
+      <button class="toolbar-btn" data-zoom="fit" data-target="m1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V3h4M21 7V3h-4M3 17v4h4M21 17v4h-4"/></svg>
+        适合屏幕
+      </button>
+      <button class="toolbar-btn" data-zoom="reset" data-target="m1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>
+        重置
+      </button>
+      <span class="zoom-info" id="zoom-info-m1">100%</span>
+    </div>
+    <div class="mermaid-stage" id="stage-m1">
+<pre class="mermaid" id="m1">
 flowchart TD
-  Start([用户在前端选文件<br/>POST /api/rag/file/upload]) --> Guard{JwtAuthGuard<br/>是否登录?}
-  Guard -->|否| R401[401 未识别到用户]
-  Guard -->|是| Multer
+  Start([用户选文件<br/>POST /rag/file/upload]) --> Guard{JwtAuthGuard}
+  Guard -->|未登录| R401[401]
+  Guard -->|通过| Multer
 
-  Multer[multer.diskStorage<br/>拦截器 FileInterceptor]
-  Multer --> Filter{扩展名白名单?<br/>txt md pdf docx xlsx xls csv}
-  Filter -->|否| R400[400 文件类型不支持]
-  Filter -->|是| Size{文件大小 ≤ 50MB?}
-  Size -->|否| R400Size[400 文件超限]
-  Size -->|是| Disk[写入磁盘 RAG_UPLOAD_DIR<br/>latin1→utf8 修复中文文件名]
+  Multer[multer.diskStorage<br/>写入磁盘]
+  Multer --> Filter{白名单检查}
+  Filter -->|不支持| R400[400 类型不支持]
+  Filter -->|通过| Size{≤ 50MB?}
+  Size -->|超限| R400S[400 超限]
+  Size -->|通过| Disk[落盘 RAG_UPLOAD_DIR<br/>latin1→utf8 修中文]
 
-  Disk --> Service[RagService.registerPhysicalFile]
-  Service --> Judge{扩展名判定 ragTrack}
-  Judge -->|xlsx xls csv| SQLTrack[ragTrack = SQL]
-  Judge -->|txt md pdf docx| VecTrack[ragTrack = VECTOR]
-  SQLTrack --> Insert[INSERT RagFileEntity<br/>vectorStatus = PROCESSING<br/>size fileUrl fileType userId]
-  VecTrack --> Insert
+  Disk --> Svc[registerPhysicalFile]
+  Svc --> Track{扩展名}
+  Track -->|xlsx/xls/csv| SQL[ragTrack = SQL]
+  Track -->|其他| VEC[ragTrack = VECTOR]
+  SQL --> Insert[INSERT RagFileEntity<br/>vectorStatus=PROCESSING]
+  VEC --> Insert
 
-  Insert --> Enqueue[BullMQ Queue<br/>queue.add RAG_ETL_JOB_RUN<br/>payload: filePath fileId userId originalName]
-  Enqueue --> Respond[HTTP 200 立即返回<br/>文件接收成功,异步清洗任务已激活]
+  Insert --> Enq[BullMQ 入队<br/>rag-etl queue]
+  Enq --> Resp[HTTP 200 立即返回]
+  Enq -.异步.-> Worker[RagFileProcessor<br/>concurrency=3<br/>3次重试 2s→4s→8s]
+  Worker --> Run[runEtlJob]
+  Run --> Read[读磁盘→buffer<br/>算 sha256 + mtime]
+  Read --> Route{ragTrack?}
 
-  Enqueue -.异步.-> Worker[RagFileProcessor Worker<br/>concurrency=3<br/>lockDuration=5min<br/>attempts=3 指数退避 2s→4s→8s]
-  Worker --> ETL[RagService.runEtlJob]
-  ETL --> Read[fs.readFile 读磁盘 → buffer<br/>stat 取 mtime + sha256]
-  Read --> Route{根据 ragTrack 分流}
+  Route -->|VECTOR| ParseV
+  Route -->|SQL| ParseS
 
-  Route -->|VECTOR| ParseVec[parseDocumentToVectorStore]
-  Route -->|SQL| ParseSQL[parseStructuredToVectorStore]
-
-  subgraph VECTOR [VECTOR 轨道 · 长文本]
-    ParseVec --> Ext{扩展名分支}
-    Ext -->|txt/md| ReadTxt[buffer.toString utf-8]
-    Ext -->|pdf| ReadPdf[pdf-parse<br/>按页用 \f 分隔<br/>重组 加【第 N 页】前缀]
-    Ext -->|docx| ReadDocx[mammoth.extractRawText]
-    ReadTxt --> PreMd{md?}
-    ReadPdf --> PreMd
-    ReadDocx --> PreMd
-    PreMd -->|是| MdPre[preprocessMarkdownTables<br/>表格结构化预处理]
-    PreMd -->|否| Split
-    MdPre --> Split[RecursiveCharacterTextSplitter<br/>md 用 markdown 结构分隔符<br/>其余默认 800/150]
-    Split --> Chunks[生成 chunks<br/>metadata: fileId fileName chunkIndex userId<br/>PDF 额外 pageNumber]
-    Chunks --> Summary[generateDocumentSummary<br/>LLM 整文档摘要<br/>写入首条 chunkType=summary]
-    Summary --> FAQ[generateChunkFAQs<br/>每 chunk 生成 3-5 个 FAQ<br/>最多 5 个 chunkType=faq]
-    FAQ --> CtxRet[applyContextualRetrieval 灰度<br/>每 chunk 加 LLM 上下文注释]
-    CtxRet --> Probe[embedQuery __dim_probe__<br/>探测向量维度]
-    Probe --> Ensure[ensureQdrantCollection<br/>不存在→建 dim 不匹配→删重建]
-    Ensure --> WriteVec[QdrantVectorStore.fromDocuments<br/>dense embedding + 内部 sparse<br/>写入 Qdrant]
+  subgraph VEC_SUB [VECTOR 轨道 · 长文本]
+    ParseV[parseDocumentToVectorStore] --> Ext{扩展名}
+    Ext -->|txt/md| Txt[buffer toString utf-8]
+    Ext -->|pdf| Pdf[pdf-parse<br/>按页 重组前缀]
+    Ext -->|docx| Docx[mammoth extractRawText]
+    Txt --> Pre{md?}
+    Pdf --> Pre
+    Docx --> Pre
+    Pre -->|是| MdPre[表格预处理]
+    Pre -->|否| Split
+    MdPre --> Split[RecursiveCharacterTextSplitter<br/>md 走结构分隔符<br/>其他默认 800/150]
+    Split --> Chunks[生成 chunks<br/>metadata: fileId chunkIndex userId]
+    Chunks --> Sum[LLM 整文档摘要<br/>chunkType=summary]
+    Sum --> FAQ[LLM 生成 FAQ<br/>最多 5 条 chunkType=faq]
+    FAQ --> Ctx[灰度 Contextual Retrieval<br/>加上下文注释]
+    Ctx --> Probe[探向量维度]
+    Probe --> Ens[ensureQdrantCollection<br/>不存在→建 不匹配→重建]
+    Ens --> WV[QdrantVectorStore<br/>.fromDocuments 写入]
   end
 
-  subgraph SQL [SQL 轨道 · 结构化表格]
-    ParseSQL --> ExDet[detectHeaderRow<br/>自动探测真表头行]
-    ExDet --> ExRead{扩展名}
-    ExRead -->|xlsx/xls| ExcelJS[ExcelJS.parseExcelRows<br/>提取每个 sheet]
-    ExRead -->|csv| CSV[parseCsvRows]
-    ExcelJS --> Serialize
-    CSV --> Serialize[serializeRowAsNaturalLanguage<br/>每行转 【Sheet】第N行: 列=值 字符串]
-    Serialize --> SheetSum[generateSheetSummary<br/>LLM sheet 全局摘要]
-    SheetSum --> RowChunk[每行 1 chunk<br/>超长用 splitter 兜底切<br/>metadata: sheetName columns rowIndices headerRow]
-    RowChunk --> SqlFAQ[行级 FAQ<br/>最多 5 条 chunkType=faq]
-    SqlFAQ --> SqlCtx[applyContextualRetrieval<br/>SQL 全文本拼接]
-    SqlCtx --> SqlProbe[embedQuery 探维度]
-    SqlProbe --> SqlEnsure[ensureQdrantCollection]
-    SqlEnsure --> WriteSql[QdrantVectorStore.fromDocuments<br/>dense + sparse 入 Qdrant]
+  subgraph SQL_SUB [SQL 轨道 · 结构化表格]
+    ParseS[parseStructuredToVectorStore] --> Det[detectHeaderRow<br/>自动表头]
+    Det --> Ex{扩展名}
+    Ex -->|xlsx/xls| Xls[ExcelJS 解析 sheet]
+    Ex -->|csv| Csv[parseCsvRows]
+    Xls --> Ser
+    Csv --> Ser[serializeRowAsNaturalLanguage<br/>第N行: 列=值]
+    Ser --> SSum[LLM sheet 摘要]
+    SSum --> Row[每行 1 chunk<br/>超长用 splitter 兜底<br/>metadata: sheet columns rowIndices]
+    Row --> SFQ[行级 FAQ<br/>最多 5 条]
+    SFQ --> SP[探维度]
+    SP --> SE[ensureQdrantCollection]
+    SE --> WS[QdrantVectorStore<br/>.fromDocuments 写入]
   end
 
-  WriteVec --> Persist[UPDATE RagFileEntity<br/>vectorStatus = SUCCESS<br/>contentHash fileMtime headerRow]
-  WriteSql --> Persist
-
-  Persist --> Metric[Prometheus recordEtlComplete<br/>记录 ETL 耗时]
-  Metric --> Done([任务完成])
-
-  Persist -.失败兜底.-> Fail[UPDATE vectorStatus = FAILED<br/>errorMessage = msg + 堆栈前 3 行]
-  Fail --> Metric
+  WV --> Persist
+  WS --> Persist
+  Persist[UPDATE RagFileEntity<br/>vectorStatus=SUCCESS<br/>+ contentHash mtime headerRow]
+  Persist --> Met[Prometheus<br/>recordEtlComplete]
+  Met --> Done([完成])
+  Persist -.失败.-> Fail[vectorStatus=FAILED<br/>errorMessage 存堆栈前 3 行]
+  Fail --> Met
 </pre>
+    </div>
   </div>
 
   <div class="legend">
@@ -218,12 +246,12 @@ flowchart TD
     <div class="note">
       <div class="note-label">关键技术</div>
       <h4>异步 ETL · BullMQ</h4>
-      <p><code>concurrency=3</code> 控制并发,<code>lockDuration=5min</code> + <code>stalledInterval=1min</code> 显式拉大,避免 Windows + onnxruntime 启动慢导致 stalled 误判。失败 <code>attempts=3</code>,指数退避 <code>2s→4s→8s</code>。</p>
+      <p><code>concurrency=3</code> 控制并发;<code>lockDuration=5min</code> + <code>stalledInterval=1min</code> 显式拉大,避免 Windows + onnxruntime 启动慢导致 stalled 误判。失败 <code>attempts=3</code>,指数退避 2s→4s→8s。</p>
     </div>
     <div class="note">
       <div class="note-label">双轨制</div>
       <h4>ragTrack 路由</h4>
-      <p><code>xlsx/xls/csv</code> 走 SQL 轨 — 每行一个 chunk,metadata 携带 sheetName/columns/rowIndices,引用可精准到行级;其他格式走 VECTOR 轨 — 文本切片 + embedding。</p>
+      <p><code>xlsx/xls/csv</code> 走 SQL 轨 — 每行一个 chunk,metadata 携带 <code>sheetName/columns/rowIndices</code>,引用可精准到行级;其他格式走 VECTOR 轨 — 文本切片 + embedding。</p>
     </div>
     <div class="note">
       <div class="note-label">检索增强</div>
@@ -261,93 +289,108 @@ flowchart TD
   </div>
 
   <div class="mermaid-block">
-<pre class="mermaid">
+    <div class="mermaid-toolbar">
+      <span class="toolbar-label">流程图 2</span>
+      <button class="toolbar-btn" data-zoom="in" data-target="m2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>
+        放大
+      </button>
+      <button class="toolbar-btn" data-zoom="out" data-target="m2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M8 11h6"/></svg>
+        缩小
+      </button>
+      <button class="toolbar-btn" data-zoom="fit" data-target="m2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V3h4M21 7V3h-4M3 17v4h4M21 17v4h-4"/></svg>
+        适合屏幕
+      </button>
+      <button class="toolbar-btn" data-zoom="reset" data-target="m2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>
+        重置
+      </button>
+      <span class="zoom-info" id="zoom-info-m2">100%</span>
+    </div>
+    <div class="mermaid-stage" id="stage-m2">
+<pre class="mermaid" id="m2">
 flowchart TD
-  Start([前端 POST /api/rag/ask-stream<br/>body: question sessionId? sources?]) --> Guard{JwtAuthGuard}
+  Start([前端 POST /rag/ask-stream<br/>body: question sessionId? sources?]) --> Guard{JwtAuthGuard}
   Guard -->|失败| R401[401]
-  Guard -->|通过| SetSSE[设置 SSE 响应头<br/>Content-Type: text/event-stream<br/>AbortController 监听 res.on close/error]
-  SetSSE --> Exec[executeDualTrackQuery]
+  Guard -->|通过| SSE[设置 SSE 响应头<br/>监听 res.on close/error<br/>AbortController]
+  SSE --> Exec[executeDualTrackQuery]
   Exec --> Sess{有 sessionId?}
-  Sess -->|否| NewSess[createSession<br/>title = question.slice 0 24]
-  Sess -->|是| LoadSess[getOwnedSession<br/>归属校验]
-  LoadSess -->|无权| R403[403 会话不存在或无权访问]
-  LoadSess -->|通过| PushSess
-  NewSess --> PushSess[SSE 第一帧 code:session<br/>推送新会话 id 和 title]
-  PushSess --> History[buildHistoryContext<br/>拉最近 6 轮对话]
-
-  History --> Notify[SSSE 推送 code:200<br/>正在检索关联知识库资产]
-  Notify --> Hyde[HyDE LLM 生成假设性回答<br/>拼接到原 query 后]
-  Hyde -->|灰度| MQ[Multi-Query LLM 改写<br/>生成 N 个不同视角查询]
-  HyDE --> MQ2
-  MQ --> Expand{有 sources?}
-  MQ2 --> Expand
-
-  Expand -->|有| BFS[expandAssetIdsToFileIds<br/>BFS 展开文件夹 → 纯文件 id<br/>userId 隔离]
-  Expand -->|无| Search
+  Sess -->|否| NewS[createSession<br/>title=question 前 24 字]
+  Sess -->|是| Load[getOwnedSession<br/>归属校验]
+  Load -->|无权| R403[403]
+  Load -->|通过| PushS
+  NewS --> PushS[SSE 推 code:session<br/>新会话 id + title]
+  PushS --> Hist[buildHistoryContext<br/>拉最近 6 轮]
+  Hist --> N1[SSE 推 code:200<br/>正在检索关联知识库资产]
+  N1 --> Hyde[HyDE LLM 生成<br/>假设性回答拼接]
+  Hyde --> MQ{multiQuery 灰度?}
+  MQ -->|开| MQR[LLM 改写 N 个查询]
+  MQ -->|关| NQ
+  MQR --> NQ
+  NQ{有 sources?}
+  NQ -->|有| BFS[expandAssetIdsToFileIds<br/>BFS 展开文件夹]
+  NQ -->|无| Search
   BFS --> Search[vectorSearch topK=20]
 
-  subgraph RETRIEVE [检索阶段]
-    Search --> Emb[embedQuery 限流+熔断<br/>生成 dense 向量]
-    Emb --> Hybrid{ai.rag.p1.hybrid?}
-    Hybrid -->|是| Qdrant[QdrantHybridProvider<br/>dense + sparse BM25 prefetch<br/>Qdrant 原生 RRF 融合]
-    Hybrid -->|否| Dense[QdrantVectorStore<br/>similaritySearchWithScore<br/>dense-only]
-    Qdrant --> Filter
-    Dense --> Filter[filter: metadata.userId = userId<br/>+ metadata.fileId IN list]
-    Filter --> MultiRoute{多路 query?}
-    MultiRoute -->|是| RRF[本地 rrfFusion 合并]
-    MultiRoute -->|否| Recalled[recall = 20]
-    RRF --> Recalled
+  subgraph RET_SUB [检索阶段]
+    Search --> Emb[embedQuery 限流熔断]
+    Emb --> Hyb{hybrid 灰度?}
+    Hyb -->|是| QHY[QdrantHybridProvider<br/>dense+sparse prefetch<br/>原生 RRF 融合]
+    Hyb -->|否| QDE[QdrantVectorStore<br/>similaritySearchWithScore]
+    QHY --> Flt
+    QDE --> Flt[filter: userId=userId<br/>+ fileId IN list]
+    Flt --> MR{多路 query?}
+    MR -->|是| RF[本地 rrfFusion 合并]
+    MR -->|否| Rec[recall=20]
+    RF --> Rec
   end
 
-  Recalled --> NeedRerank{recall > 4?}
-  NeedRerank -->|是| DropFAQ1[剔除 chunkType=faq]
-  DropFAQ1 --> Rerank[RerankProvider cross-encoder<br/>rerank question candidates topN=4]
-  Rerank --> Fill{rerank 输出够 4?}
-  Fill -->|否| Fallback[用原始 recall 顺序补]
-  Fill -->|是| Top4
-  Fallback --> Top4[截到 top-4]
-  NeedRerank -->|否| Top4
+  Rec --> NR{recall > 4?}
+  NR -->|是| DF1[剔除 chunkType=faq]
+  DF1 --> Rk[RerankProvider<br/>cross-encoder rerank]
+  Rk --> Fill{rank 够 4?}
+  Fill -->|否| FB[用 raw recall 顺序补]
+  Fill -->|是| T4
+  FB --> T4[截到 top-4]
+  NR -->|否| T4
+  T4 --> DF2[再次过滤 FAQ]
+  DF2 --> Emp{top-4 为空?}
+  Emp -->|是| Ref[拒答 + 占位 citations]
+  Emp -->|否| HC[关键词 bigram 重叠率检查<br/>重叠率 < 5% → 拒答]
+  HC -->|拒答| Ref
+  HC -->|通过| CR{crag 灰度?}
+  CR -->|是| GD[gradeDocuments LLM 评 RELEVANT]
+  CR -->|否| Cit
+  GD --> Cit[构造 CitationDto<br/>SQL 轨: sheet columns rowIndices]
+  Ref --> Done
+  Cit --> CB{有 SQL 轨?}
+  CB -->|是| CS[contextText 行级格式<br/>【表格行级参考 sheet/rows】]
+  CB -->|否| CV[contextText 文本格式<br/>【参考源 fileName】]
+  CS --> SP[构造 systemPrompt<br/>SQL/VECTOR 两套规则]
+  CV --> SP
+  SP --> N2[SSE 推 code:200<br/>已定位到行级数据 / 已为您提炼]
+  N2 --> LStr[streamLlmWithHistory]
 
-  Top4 --> DropFAQ2[再次过滤 FAQ 兜底]
-  DropFAQ2 --> Empty{top-4 为空?}
-  Empty -->|是| Refuse[拒答<br/>未在已加载的参考资料中找到相关信息<br/>占位 citations fileId=-1]
-  Empty -->|否| HardCheck[相关性 hard check<br/>中英 bigram 重叠率 &lt; 5% qTokens≥10<br/>触发拒答]
-
-  HardCheck -->|拒答| Refuse
-  HardCheck -->|通过| CRAG{ai.rag.p3.crag?}
-  CRAG -->|是| Grade[gradeDocuments<br/>LLM 评 RELEVANT PARTIAL IRRELEVANT<br/>过滤 IRRELEVANT]
-  CRAG -->|否| Cite
-  Grade --> Cite[构造 CitationDto 数组<br/>fileId fileName chunkIndex score<br/>SQL 轨道含 sheetName columns rowIndices]
-  Refuse --> CiteRefuse[推送占位 citations]
-
-  Cite --> CtxBuild{有 SQL 轨道?}
-  CtxBuild -->|是| CtxSql[contextText = 行级格式<br/>【表格行级参考 fileName/sheetName】<br/>列名 行号列表 行级数据]
-  CtxBuild -->|否| CtxVec[contextText = 文本格式<br/>【参考源 fileName】pageContent]
-  CtxSql --> Prompt
-  CtxVec --> Prompt[构造 systemPrompt<br/>SQL 轨:行级计算规范<br/>VECTOR 轨:通用严谨 RAG 规则]
-  CiteRefuse --> Done
-  Prompt --> Notify2[推送 code:200<br/>已定位到行级数据 / 已为您提炼关联企业物料]
-  Notify2 --> LLMStream[streamLlmWithHistory]
-
-  subgraph LLMSTAGE [LLM 流式生成阶段]
-    LLMStream --> BuildMsg[messages = system + history×N + human question]
-    BuildMsg --> LLMCall[ChatOpenAI.stream messages signal<br/>限流+熔断 concurrency=8 timeout=60s]
-    LLMCall --> Loop{for await chunk}
-    Loop -->|aborted| Break[break 已累积字符写入 partial]
-    Loop -->|正常| WriteSSE[res.write data frame<br/>JSON code:200 data:content<br/>full += content]
-    WriteSSE --> Loop
-    Break --> Sanitize[sanitizeCitationMarkers<br/>校验 n 角标不越界<br/>越界替换为 ?]
+  subgraph LLM_SUB [LLM 流式生成]
+    LStr --> BM[messages = system + history + human]
+    BM --> LC[ChatOpenAI.stream<br/>concurrency=8 timeout=60s]
+    LC --> Loop{for await chunk}
+    Loop -->|aborted| Br[break 累积 partial]
+    Loop -->|正常| WSSE[res.write data frame<br/>JSON code:200 data:content]
+    WSSE --> Loop
+    Br --> San[sanitizeCitationMarkers<br/>越界 角标 → ?]
   end
 
-  Sanitize --> CitePush[推送 code:sources + citations]
-  CitePush --> Persist[appendTurn 持久化<br/>INSERT RagMessageEntity × 2 user + assistant<br/>UPDATE RagSessionEntity updatedAt]
-
-  Persist --> EndSSE[controller finally<br/>推送 code:ok stream_ended<br/>res.end]
-  EndSSE --> Done([用户看到流式回答 + 引用卡片])
-
-  SetSSE -.客户端断开.-> Abort[res.on close 触发 ac.abort<br/>LLM stream 立刻 break<br/>停止烧 token]
-  Abort -.持久化降级.-> PersistAbort[仅持久化 user 消息<br/>assistant 不存避免空气泡]
+  San --> SPush[SSE 推 code:sources + citations]
+  SPush --> Per[appendTurn 持久化<br/>INSERT messages × 2<br/>UPDATE session.updatedAt]
+  Per --> EndS[controller finally<br/>推 code:ok stream_ended]
+  EndS --> Done([用户看到流式回答 + 引用卡片])
+  SSE -.客户端断开.-> Ab[ac.abort LLM stream 立刻 break]
+  Ab -.持久化降级.-> AbP[仅存 user 消息<br/>assistant 不存避免空气泡]
 </pre>
+    </div>
   </div>
 
   <div class="legend">
@@ -469,13 +512,22 @@ flowchart TD
 </div>
 
 <script>
+  // Mermaid 配置 - 全局加大的字号和节点尺寸
   mermaid.initialize({
     startOnLoad: true,
     theme: 'base',
-    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis', padding: 12 },
+    flowchart: {
+      useMaxWidth: false,
+      htmlLabels: true,
+      curve: 'basis',
+      padding: 18,
+      nodeSpacing: 50,
+      rankSpacing: 60,
+      wrappingWidth: 240
+    },
     themeVariables: {
       fontFamily: "'Outfit', system-ui, sans-serif",
-      fontSize: '13px',
+      fontSize: '17px',
       primaryColor: '#ffffff',
       primaryTextColor: '#14171e',
       primaryBorderColor: '#2f6f5e',
@@ -487,6 +539,87 @@ flowchart TD
       clusterBorder: '#e9e3d6',
       edgeLabelBackground: '#ffffff'
     }
+  });
+
+  // Zoom / Pan 控制器
+  const stages = {};
+  document.querySelectorAll('.mermaid-stage').forEach(stage => {
+    const id = stage.id.replace('stage-', '');
+    const inner = stage.querySelector('div');
+    stages[id] = {
+      stage,
+      inner: inner || stage,
+      scale: 1,
+      x: 0,
+      y: 0
+    };
+    // 监听滚轮缩放
+    stage.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey && !e.metaKey) return; // 不按 Ctrl/Meta 不缩放,允许正常滚动
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.12 : 0.12;
+      const newScale = Math.max(0.3, Math.min(3, stages[id].scale + delta));
+      stages[id].scale = newScale;
+      applyTransform(id);
+    }, { passive: false });
+
+    // 拖拽平移
+    let isDragging = false, startX, startY, startOffsetX, startOffsetY;
+    stage.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button, a, .toolbar-btn')) return;
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startOffsetX = stages[id].x;
+      startOffsetY = stages[id].y;
+      stage.style.cursor = 'grabbing';
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      stages[id].x = startOffsetX + (e.clientX - startX);
+      stages[id].y = startOffsetY + (e.clientY - startY);
+      applyTransform(id);
+    });
+    window.addEventListener('mouseup', () => {
+      if (isDragging) stage.style.cursor = 'grab';
+      isDragging = false;
+    });
+  });
+
+  function applyTransform(id) {
+    const s = stages[id];
+    if (!s.inner) return;
+    s.inner.style.transform = `translate(${s.x}px, ${s.y}px) scale(${s.scale})`;
+    const info = document.getElementById(`zoom-info-${id}`);
+    if (info) info.textContent = `${Math.round(s.scale * 100)}%`;
+  }
+
+  // 工具栏按钮
+  document.querySelectorAll('.toolbar-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.zoom;
+      const target = btn.dataset.target;
+      const s = stages[target];
+      if (!s) return;
+      if (action === 'in') s.scale = Math.min(3, s.scale + 0.2);
+      else if (action === 'out') s.scale = Math.max(0.3, s.scale - 0.2);
+      else if (action === 'reset') { s.scale = 1; s.x = 0; s.y = 0; }
+      else if (action === 'fit') {
+        // 适合屏幕:计算 mermaid 渲染尺寸与容器尺寸比
+        const svg = s.stage.querySelector('svg');
+        if (svg) {
+          const stageRect = s.stage.getBoundingClientRect();
+          const svgRect = svg.getBoundingClientRect();
+          const scaleX = (stageRect.width - 48) / svgRect.width;
+          const scaleY = (stageRect.height - 48) / svgRect.height;
+          s.scale = Math.min(scaleX, scaleY, 1.5);
+          // 居中
+          s.x = (stageRect.width - svgRect.width * s.scale) / 2;
+          s.y = (stageRect.height - svgRect.height * s.scale) / 2;
+        }
+      }
+      applyTransform(target);
+    });
   });
 </script>
 </body>
